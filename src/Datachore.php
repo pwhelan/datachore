@@ -11,6 +11,7 @@ class Datachore
 	private $_datasetId = null;
 	private $_datastore = null;
 	
+	protected $_operation;
 	protected $_runQuery;
 	protected $_query;
 	protected $_filter;
@@ -22,7 +23,7 @@ class Datachore
 		$this->_query = $this->_runQuery->mutableQuery();
 	}
 	
-	public function __construct($model)
+	public function __construct()
 	{
 		$this->_clear();
 	}
@@ -43,14 +44,13 @@ class Datachore
 		return $this->_datasetId;
 	}
 	
-	private function _kind_from_class($object = null)
+	private function _kind_from_class($className = NULL)
 	{
-		if ($object === null)
+		if (!$className)
 		{
-			$object = $this;
+			$className = get_class($this);
 		}
 		
-		$className = get_class($object);
 		$kindName = str_replace('\\', '_', $className);
 		return $kindName;
 	}
@@ -65,18 +65,8 @@ class Datachore
 		return $this->_datastore;
 	}
 	
-	public function save($collection = null)
+	public function startSave()
 	{
-		if ($collection === null)
-		{
-			$collection = new Collection([$this]);
-		}
-		else if (!$collection instanceof Collection)
-		{
-			$collection = new Collection([$collection]);
-		}
-		
-		
 		$transactionRequest = $this->datastore()->Factory('BeginTransactionRequest');
 		$transactionRequest->setCrossGroup(true);
 		//$isolationLevel->setIsolationLevel('snapshot');
@@ -91,45 +81,106 @@ class Datachore
 		$commit->setMode(\google\appengine\datastore\v4\CommitRequest\Mode::TRANSACTIONAL);
 		
 		$mutation = $commit->mutableDeprecatedMutation();
-		$pairs = [];
 		
-		
-		foreach ($collection as $model)
-		{
-			if ($model->key)
-			{
-				$entity = $mutation->addUpdate();
-				$this->_GoogleKeyValue($entity->mutableKey(), $model->id, $model);
-			}
-			else
-			{
-				$entity = $mutation->addInsertAutoId();
-				$this->_GoogleKeyValue($entity->mutableKey(), null, $model);
-				
-				// For now just save auto insert pairs
-				$pairs[] = [$model, $entity];
-			}
-			
-			$model->mergeIntoEntity($entity);
-		}
-		
-		
+		return [$commit, $mutation];
+	}
+	
+	public function endSave($commit, $mutation, $collection = null)
+	{
 		$rc = $this->datastore()->commit($this->datasetId(), $commit);
 		
-		$insertIds = $mutation->getInsertAutoIdList();
-		for ($i = 0; $i < count($insertIds); $i++)
+		if ($collection)
 		{
-			foreach ($pairs as $pair)
+			$insertsIds = $mutation->getInsertAutoIdList();
+			for ($i = 0; $i < count($insertIds); $i++)
 			{
-				if ($pair[1] == $insertIds[$i])
+				foreach ($collection as $model)
 				{
-					$pair[0]->key = $rc->getDeprecatedMutationResult()
-						->getInsertAutoIdKey($i);
+					if ($model->_opertion == $insertIds[$i])
+					{
+						$rc->getDeprecatedMutationResult()
+							->getInsertAutoIdKey($i);
+					}
 				}
+			}
+		}
+		else
+		{
+			if (!$this->id)
+			{
+				$this->__key = $rc->getDeprecatedMutationResult()
+					->getInsertAutoIdKey(0);
 			}
 		}
 		
 		return $rc;
+	}
+	
+	public function save($mutation = null)
+	{
+		if (!$mutation)
+		{
+			list($commit, $mutation) = $this->startSave();
+		}
+		
+		
+		if ($this->id)
+		{
+			$entity = $mutation->addUpdate();
+			$this->_GoogleKeyValue($entity->mutableKey(), $this->id);
+		}
+		else
+		{
+			//$mutation->setOp(\google\appengine\datastore\v4\Mutation\Operation::INSERT);
+			//$this->_GoogleKeyValue($mutation->mutableKey());
+			
+			$entity = $mutation->addInsertAutoId();
+			$this->_GoogleKeyValue($entity->mutableKey());
+		}
+		
+		
+		$this->_operation = $entity;
+		
+		foreach($this->properties as $key => $type)
+		{
+			if (isset($this->updates[$key]))
+			{
+				$value = $this->updates[$key];
+			}
+			else if (isset($this->values[$key]))
+			{
+				if ($this->values[$key] instanceof DataValue)
+				{
+					$value = $this->values[$key]->rawValue();
+				}
+				else
+				{
+					$value = $this->values[$key];
+				}
+			}
+			else
+			{
+				// No value..
+				continue;
+			}
+			
+			$property = $entity->addProperty();
+			$propval = $property->mutableValue();
+			
+			$this->_assignPropertyValue($propval, $this->properties[$key], $value);
+			$property->setName($key);
+		}
+		
+		print "<pre>"; print_r($mutation);
+		die("WTF?");
+		
+				
+		if (isset($commit))
+		{
+			$this->endSave($commit, $mutation);
+		}
+		
+		return true;
 	}
 	
 	
@@ -150,7 +201,7 @@ class Datachore
 	];
 	
 	
-	final protected function _GoogleKeyValue(\google\appengine\datastore\v4\Key $key, $id = null, $model = null)
+	final protected function _GoogleKeyValue(\google\appengine\datastore\v4\Key $key, $id = null)
 	{
 		$partitionId = $key->mutablePartitionId();
 		$path = $key->addPathElement();
@@ -186,7 +237,7 @@ class Datachore
 			}
 		}
 		
-		$path->setKind($this->_kind_from_class($model));
+		$path->setKind($this->_kind_from_class());
 		
 		return $key;
 	}
@@ -231,7 +282,53 @@ class Datachore
 		}
 		else
 		{
-			$value->setStringValue($rawValue);
+			switch(true)
+			{
+				case $this->properties[$propertyName] instanceof Type\Blob:
+					$value->setBlobValue($rawValue);
+					break;
+					
+				case $this->properties[$propertyName] instanceof Type\BlobKey:
+					$value->setBlobKeyValue($rawValue);
+					break;
+					
+				case $this->properties[$propertyName] instanceof Type\String:
+					$value->setStringValue($rawValue);
+					break;
+					
+				case $this->properties[$propertyName] instanceof Type\Boolean:
+					$value->setBooleanValue($rawValue);
+					break;
+					
+				case $this->properties[$propertyName] instanceof Type\Integer:
+					$value->setIntegerValue($rawValue);
+					break;
+					
+				case $this->properties[$propertyName] instanceof Type\Double:
+					$value->setDoubleValue($rawValue);
+					break;
+					
+				case $this->properties[$propertyName] instanceof Type\Timestamp:
+					
+					switch(true)
+					{
+						case $rawValue instanceof \DateTime:
+							$time = $rawValue->format('u') * (1000 * 1000) +
+								$rawValue->getTimestamp() * (1000 * 1000);
+							break;
+						case is_numeric($rawValue):
+							$time = (int)($rawValue * 10000) * 100;
+							break;
+						case is_string($rawValue):
+							strtotime($rawValue) * (1000 * 1000);
+							break;
+					}
+					
+					$value->setTimestampMicrosecondsValue($time);
+					break;
+			}
+			
+			//$value->setStringValue($rawValue);
 		}
 		
 		if ($propertyName == 'id')

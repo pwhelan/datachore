@@ -6,7 +6,16 @@ class Collection extends \Illuminate\Support\Collection
 {
 	public function save()
 	{
-		$chore = new Datachore;
-		$chore->save($this);
+		if (count($this->items) > 0)
+		{
+			list ($commit, $mutation) = $this->items[0]->startSave();
+			
+			foreach($this->items as $item)
+			{
+				$item->save($mutation);
+			}
+			
+			$this->items[0]->endSave($commit, $mutation, $this);
+		}
 	}
 }
