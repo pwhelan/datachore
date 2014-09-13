@@ -47,7 +47,7 @@ class Model extends Datachore
 			{
 				if ($this->updates[$key] instanceof \google\appengine\datastore\v4\Key)
 				{
-					$fkey = $this->values[$key];
+					$fkey = $this->updates[$key];
 				}
 			}
 			
