@@ -91,9 +91,12 @@ class Model extends Datachore
 	
 	public function __set($key, $val)
 	{
-		if (($key == 'id' || $key == 'key') && $val instanceof \google\appengine\datastore\v4\Key)
+		if (($key == 'id' || $key == 'key'))
 		{
-			return $this->__key = $val;
+			if ($val instanceof \google\appengine\datastore\v4\Key)
+			{
+				return $this->__key = clone $val;
+			}
 		}
 		else if ($val instanceof \google\appengine\datastore\v4\Key)
 		{
