@@ -1,0 +1,11 @@
+application: datachore-test
+version: 1
+runtime: php
+api_version: 1
+
+builtins:
+- remote_api: on
+
+handlers:
+- url: /.*
+  script: frontcontroller.php

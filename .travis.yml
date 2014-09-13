@@ -1,0 +1,28 @@
+language: php
+
+php:
+    - 5.4
+
+env:
+    - INSTALL_PHP_INVOKER=0
+    - INSTALL_PHP_INVOKER=1
+
+before_script:
+    - composer install --no-interaction --dev
+    - wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.10.zip -nv
+    - unzip -q google_appengine_1.9.10.zip
+
+script: vendor/bin/phpunit
+
+#notifications:
+#  email: false
+#  irc:
+#    channels:
+#      - "irc.freenode.org#phpunit"
+#    use_notice: true
+#  webhooks:
+#    urls:
+#      - https://webhooks.gitter.im/e/6668f52f3dd4e3f81960
+#    on_success: always
+#    on_failure: always
+#    on_start: false
