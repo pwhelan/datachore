@@ -4,11 +4,21 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 {
 	public function testInsert()
 	{
-		$response = Guzzlehttp\get('http://127.0.0.1:8080/test/insert/foo/1');
-		$insert = json_decode($response->getBody());
-		
-		$this->assertEquals($insert->name, "foo");
-		$this->assertEquals($insert->counter, 1);
+		try {
+			$response = Guzzlehttp\get('http://127.0.0.1:8080/test/insert/foo/1');
+			$insert = json_decode($response->getBody());
+			
+			$this->assertEquals($insert->name, "foo");
+			$this->assertEquals($insert->counter, 1);
+		}
+		catch (GuzzleHttp\Exception\ServerException $e)
+		{
+			throw new Exception("Server error: ".$e->getResponse()->getBody());
+		}
+		catch (Exception $e)
+		{
+			throw new Exception("ERROR: ".get_class($e));
+		}
 	}
 	
 	public function testUpdate()
