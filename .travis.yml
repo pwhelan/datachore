@@ -13,3 +13,5 @@ script: vendor/bin/phpunit UnitTest tests/DatastoreTest.php
 
 after_script:
     - bash -c 'cat appengine.pid | xargs kill'
+    - cat out.log
+    - cat err.log
