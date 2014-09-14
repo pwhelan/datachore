@@ -23,7 +23,7 @@ $app->get('/test/insert/(:name)/(:counter)', function($name, $counter) {
 
 $app->get('/test/update/(:id)/(:name)', function($id, $name) {
 	
-	$test = Test::find($id);
+	$test = Test::where('id', '==', $id)->first();
 	$test->name = $name;
 	$test->save();
 	
