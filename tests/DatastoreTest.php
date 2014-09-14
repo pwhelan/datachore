@@ -2,6 +2,17 @@
 
 class DatastoreTest extends PHPUnit_Framework_TestCase
 {
+	public function testEnvironment()
+	{
+		$pid = file_get_contents(__DIR__.'/../appengine.pid');
+		print "PID = {$pid}\n";
+		print "LOG FILE = \n".file_get_contents(__DIR__.'/../out.log');
+		print "ERR FILE = \n".file_get_contents(__DIR__.'/../err.log');
+		if (!file_exists('/proc/'.trim($pid)))
+		{
+			print "NO APPENGINE\n";
+		}
+	}
 	public function testInsert()
 	{
 		try {
