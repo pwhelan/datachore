@@ -12,7 +12,10 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 		{
 			print "NO APPENGINE\n";
 		}
+		passthru("ps auwx");
+		passthru("netstat -na --tcp");
 	}
+	
 	public function testInsert()
 	{
 		try {
