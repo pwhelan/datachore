@@ -262,19 +262,6 @@ class Datachore
 				{
 					$id = $id->rawValue();
 				}
-				else if (\google\appengine\datastore\v4\Value)
-				{
-					$id = $id->getKeyValue();
-				}
-				else if (\google\appengine\datastore\v4\Key)
-				{
-					$id = $id;
-				}
-				else
-				{
-					throw new \Exception("Datachore: Unexpected Key Type: ".get_class($id));
-				}
-				
 				$path->setId($id->getPathElement(0)->getId());
 			}
 		}

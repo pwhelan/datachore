@@ -2,7 +2,7 @@
 
 namespace Datachore;
 
-class DataValue
+class Value
 {
 	private $_value;
 	

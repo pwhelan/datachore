@@ -1,9 +1,9 @@
 <?php
 
 /** @TODO:
- *    * Allow setting keys directly with models and not with their keys, ie:
- *      $object->ref = $ref instead of $object->ref = $ref->key.
- */
+*    * Allow setting keys directly with models and not with their keys, ie:
+*      $object->ref = $ref instead of $object->ref = $ref->key.
+*/
 namespace Datachore;
 
 class Model extends Datachore
@@ -56,8 +56,8 @@ class Model extends Datachore
 				$fkey = $this->values[$key]->rawValue();
 			}
 			
-			if (!isset($fkey))
-			{
+			if (!isset($fkey) || !$fkey instanceof \google\appengine\datastore\v4\Key)
+			{ 
 				return null;
 			}
 			
@@ -66,9 +66,12 @@ class Model extends Datachore
 				$kindName = $fkey->getPathElement(0)->getKind();
 				$className = str_replace('_', '\\', $kindName);
 				
-				$this->foreign[$key] = (new $className)
-						->where('id', '==', $fkey)
-					->first();
+				$model = (new $className)->where('id', '==', $fkey)->first();
+				if ($model)
+				{
+					$this->foreign[$key] = $model;
+					return $model;
+				}
 			}
 			
 			return $this->foreign[$key];
@@ -102,10 +105,16 @@ class Model extends Datachore
 		{
 			return $this->updates[$key] = $val;
 		}
+		else if ($this->properties[$key] instanceof Type\Set && is_array($val))
+		{
+			return $this->updates[$key] = new \ArrayObject($val);
+		}
 		else if ($val instanceof Model)
 		{
 			$this->updates[$key] = $val->key;
-			return $this->foreign[$key] = $val;
+			$this->foreign[$key] = $val;
+			
+			return $val;
 		}
 		
 		if (!isset($this->properties[$key]))
@@ -119,6 +128,24 @@ class Model extends Datachore
 	public function __isset($key)
 	{
 		return isset($this->values[$key]) || isset($this->updates[$key]);
+	}
+	
+	public function getKey($key)
+	{
+		if (isset($this->properties[$key]) && $this->properties[$key] instanceof Type\Key)
+		{
+			if (isset($this->updates[$key]))
+			{
+				return $this->updates[$key];
+			}
+			else if (isset($this->values[$key]))
+			{
+				return $this->values[$key];
+			}
+			return null;
+		}
+		
+		throw new \Exception('Unknown Key: '.$key);
 	}
 	
 	public function toArray()
@@ -137,17 +164,6 @@ class Model extends Datachore
 			{
 				$ret[$key] = $this->updates[$key];
 			}
-			else if (isset($this->values[$key]))
-			{
-				if (isset($this->values[$key]))
-				{
-					$ret[$key] = $this->values[$key]->rawValue();
-				}
-				else
-				{
-					$ret[$key] = $this->values[$key];
-				}
-			}
 			else if (isset($this->foreign[$key]))
 			{
 				$ret[$key] = [
@@ -155,91 +171,34 @@ class Model extends Datachore
 					'id'	=> $this->foreign[$key]->key->getPathElement(0)->getId()
 				];
 			}
+			else if (isset($this->values[$key]))
+			{
+				if (isset($this->values[$key]))
+				{
+					$val = $this->values[$key]->rawValue();
+					if ($val instanceof \google\appengine\datastore\v4\Key)
+					{
+						$ret[$key] = [
+							'kind'	=> $val->getPathElement(0)->getKind(),
+							'id'	=> $val->getPathElement(0)->getId()
+						];
+					}
+					else
+					{
+						$ret[$key] = $val;
+					}
+				}
+			}
 		}
 		
 		return $ret;
 	}
 	
-	public function mergeIntoEntity($entity)
-	{
-		foreach($this->properties as $key => $type)
-		{
-			if (isset($this->updates[$key]))
-			{
-				$value = $this->updates[$key];
-			}
-			else
-			{
-				$value = $this->values[$key];
-			}
-			
-			$property = $entity->addProperty();
-			$propval = $property->mutableValue();
-			
-			
-			switch(true)
-			{
-				case $this->properties[$key] instanceof Type\String:
-					$propval->setStringValue($value);
-					break;
-				case $this->properties[$key] instanceof Type\Integer:
-					$propval->setIntegerValue($value);
-					break;
-				case $this->properties[$key] instanceof Type\Boolean:
-					$propval->setBooleanValue($value);
-					break;
-				case $this->properties[$key] instanceof Type\Double:
-					$propval->setDoubleValue($value);
-					break;
-				case $this->properties[$key] instanceof Type\Timestamp:
-					
-					switch(true)
-					{
-						case $value instanceof \DateTime:
-							$time = $value->format('u') * (1000 * 1000) +
-								$value->getTimestamp() * (1000 * 1000);
-							break;
-						case is_numeric($value):
-							$time = (int)($value * 10000) * 100;
-							break;
-						case is_string($value):
-							strtotime($value) * (1000 * 1000);
-							break;
-					}
-					
-					$propval->setTimestampMicrosecondsValue($time);
-					break;
-				case $this->properties[$key] instanceof Type\Blob:
-					$propval->setBlobValue($value);
-					break;
-				case $this->properties[$key] instanceof Type\BlobKey:
-					$propval->setBlobKeyValue($value);
-					break;
-				case $this->properties[$key] instanceof Type\Key:
-					if ($value)
-					{
-						if ($value instanceof \google\appengine\datastore\v4\Key)
-						{
-							$keyval = $propval->mutableKeyValue();
-							$keyval->mergeFrom($value);
-						}
-						else if ($value instanceof Model)
-						{
-							$this->_GoogleKeyValue($propval->mutableKeyValue(), $value);
-						}
-					}
-					break;
-				
-				default:
-					throw new \Exception("ILLEGAL ARGZZZZ!");
-			}
-			
-			$property->setName($key);
-		}
-	}
-	
 	final public function __construct($entity = null)
 	{
+		parent::__construct();
+		
+		
 		if ($entity)
 		{
 			$this->__key = $entity->entity->getKey();
