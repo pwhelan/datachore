@@ -4,6 +4,8 @@ php:
     - 5.4
 
 before_script:
+    - sudo apt-get update
+    - sudo apt-get upgrade
     - sudo apt-get install apache2 php5-cgi
     - composer install --no-interaction --dev
     - wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.10.zip -nv
