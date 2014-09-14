@@ -4,6 +4,21 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 {
 	public function testEnvironment()
 	{
+		for ($i = 0; $i < 128; $i++)
+		{
+			$fp = fsockopen("127.0.0.1", 8080, $errno, $errstr);
+			if (!$fp)
+			{
+				print "Waiting for Socket...\n";
+				sleep(1);
+			}
+			else
+			{
+				fclose($fp);
+				break;
+			}
+		}
+		
 		$pid = file_get_contents(__DIR__.'/../appengine.pid');
 		print "PID = {$pid}\n";
 		print "LOG FILE = \n".file_get_contents(__DIR__.'/../out.log');
