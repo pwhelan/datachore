@@ -10,7 +10,7 @@ before_script:
     - wget https://storage.googleapis.com/appengine-sdks/featured/google_appengine_1.9.10.zip -nv
     - unzip -q google_appengine_1.9.10.zip
     #- bash -c './google_appengine/dev_appserver.py tests/ --php_executable_path=/usr/bin/php-cgi 1> out.log 2> err.log & echo $! > appengine.pid'
-    - ./google_appengine/dev_appserver.py tests/ --php_executable_path=/usr/bin/php-cgi
+    - ./google_appengine/dev_appserver.py tests/ --php_executable_path=/usr/bin/php-cgi --skip_sdk_update_check
 
 script: vendor/bin/phpunit UnitTest tests/DatastoreTest.php
 
