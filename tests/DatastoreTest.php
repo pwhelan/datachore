@@ -217,6 +217,141 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 		}
 	}
 	
+	public function testQuery()
+	{
+		$queries = [
+			[
+				'where' => [[
+					'col'	=> 'counter',
+					'op'	=> 'greaterthanequals',
+					'value'	=> '300'
+				]],
+				'check'	=> function($result)
+				{
+					return $result->counter >= 300;
+				}
+			],
+			[	'where' => [[
+					'col'	=> 'datetime',
+					'op'	=> 'lessthan',
+					'value'	=> (new DateTime("1983-03-30"))
+						->getTimestamp()
+				]],
+				'check'	=> function($result)
+				{
+					return $result->datetime <
+						(new DateTime("1983-03-30"))
+							->getTimestamp();
+				}
+			],
+			[
+				'where' => [[
+					'col'	=> 'datetime',
+					'op'	=> 'lessthanequals',
+					'value'	=> '1980-01-01'
+				]],
+				'check'	=> function($result)
+				{
+					return $result->datetime <=
+						(new DateTime("1980-01-01"))
+							->getTimestamp();
+				}
+			],
+			[
+				'where' => [[
+					'col'	=> 'is_deleted',
+					'op'	=> 'equals',
+					'value'	=> 1,
+				]],
+				'check'	=> function($result)
+				{
+					return $result->is_deleted;
+				}
+			],
+			[
+				'where' => [[
+					'col'	=> 'price',
+					'op'	=> 'greaterthan',
+					'value'	=> 200.0,
+				]],
+				'check'	=> function($result)
+				{
+					print_r($result);
+					return true;
+					return $result->price > 200.0;
+				}
+			],
+				['where' => [[
+					'col'	=> 'price',
+					'op'	=> 'lessthanequals',
+					'value'	=> 0.0,
+				]],
+				'check'	=> function($result)
+				{
+					return $result->price <= 0.0;
+				}
+			],
+			[
+				'where' => [[
+					'col'	=> 'name',
+					'op'	=> 'equals',
+					'value'	=> 'bluefish',
+				]],
+				'check'	=> function($result)
+				{
+					return $result->name == 'bluefish';
+				}
+			],
+			[
+				'where' => [[
+					'col'	=> 'description',
+					'op'	=> 'equals',
+					'value'	=> 'ipso lorum gryphyndor',
+				]],
+				'check'	=> function($result)
+				{
+					return $result->description == 'ipso lorum gryphyndor';
+				}
+			],
+			[]
+		];
+		
+		
+		$tests = [];
+		
+		foreach ($queries as $idx => $value)
+		{
+			try {
+				$results = json_decode(
+					Guzzlehttp\post('http://127.0.0.1:8080/query/Test',[
+						'body'	=> isset($queries[$idx]['where']) ?
+							['where'  => $queries[$idx]['where']] : []
+					])
+					->getBody()
+				);
+			}
+			catch (GuzzleHttp\Exception\ServerException $e)
+			{
+				throw new Exception("Server error: ".$e->getResponse()->getBody(), 0, $e);
+			}
+			
+			if (!isset($queries[$idx]['check']))
+			{
+				continue;
+			}
+			
+			
+			foreach ($results as $result)
+			{
+				$this->assertTrue(
+					$queries[$idx]['check']($result),
+					"Failed check for query#{$idx} ".print_r($queries[$idx]['where'],true).
+					"with ".print_r($result, true)
+				);
+			}
+		}
+		
+	}
 	
 	/**
 	 * Runs the test case and collects the results in a TestResult object.
