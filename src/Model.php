@@ -57,7 +57,7 @@ class Model extends Datachore
 			}
 			
 			if (!isset($fkey) || !$fkey instanceof \google\appengine\datastore\v4\Key)
-			{ 
+			{
 				return null;
 			}
 			
@@ -128,24 +128,6 @@ class Model extends Datachore
 	public function __isset($key)
 	{
 		return isset($this->values[$key]) || isset($this->updates[$key]);
-	}
-	
-	public function getKey($key)
-	{
-		if (isset($this->properties[$key]) && $this->properties[$key] instanceof Type\Key)
-		{
-			if (isset($this->updates[$key]))
-			{
-				return $this->updates[$key];
-			}
-			else if (isset($this->values[$key]))
-			{
-				return $this->values[$key];
-			}
-			return null;
-		}
-		
-		throw new \Exception('Unknown Key: '.$key);
 	}
 	
 	public function toArray()
