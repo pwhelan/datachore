@@ -35,6 +35,25 @@ $app->post('/test/collection', function() use ($app) {
 	
 });
 
+$app->post('/test/types', function() use ($app) {
+	
+	$test = new Test;
+	
+	foreach ($app->request->post() as $key => $val)
+	{
+		$test->{$key} = $val;
+	}
+	
+	$test->save();
+	
+	print json_encode($test->toArray());
+});
+
+$app->get('/info', function() {
+	phpinfo();
+	print "<pre>"; print_r($_SERVER);
+});
+
 $app->get('/test/insert/(:name)/(:counter)', function($name, $counter) {
 	
 	$test = new Test;
@@ -91,6 +110,12 @@ $app->get('/test/orderby', function() {
 		->orderBy('counter', 'asc')
 		->get();
 	
+});
+
+$app->get('/test/(:id)', function($id) use ($app) {
+	
+	$test = Test::find($id);
+	print json_encode($test->toArray());
 });
 
 $app->run();

@@ -152,4 +152,69 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 			$this->assertObjectHasAttribute("name", $object);
 		}
 	}
+	
+	public function testTypes()
+	{
+		$values = [
+			[
+				'name'		=> 'Baal',
+				'datetime'	=> (new DateTime('1983-03-30'))->getTimestamp(),
+				'counter'	=> 1337,
+				'price'		=> 13.37,
+				'is_deleted'	=> true,
+				'description'	=> "ipso lorum gryphyndor"
+			],
+			[
+				'name'		=> 'Boring',
+				'datetime'	=> (new DateTime('1979-01-01'))->getTimestamp(),
+				'counter'	=> 424242,
+				'price'		=> 4.20,
+				'is_deleted'	=> false,
+				'description'	=> "a million little paper cuts"
+			],
+			[
+				'name'		=> 'Something Waitforit',
+				'datetime'	=> '1992-03-04',
+				'counter'	=> -28324064,
+				'price'		=> -0.05,
+				'is_deleted'	=> false,
+				'description'	=> "The date is not working, so what the hell?"
+			]
+		];
+		
+		
+		$tests = [];
+		
+		foreach ($values as $idx => $value)
+		{
+			$tests[$idx] = json_decode(
+				Guzzlehttp\post('http://127.0.0.1:8080/test/types',[
+					'body'	=> $values[$idx]
+				])
+				->getBody()
+			);
+		}
+		
+		foreach ($values as $idx => $value)
+		{
+			foreach ($value as $key => $val)
+			{
+				$this->assertEquals($val, $tests[$idx]->{$key});
+			}
+		}
+		
+		foreach ($tests as $test)
+		{
+			$t2 = json_decode(
+				Guzzlehttp\get('http://127.0.0.1:8080/test/'.$test->id)
+					->getBody()
+			);
+			
+			foreach ($test as $key => $val)
+			{
+				$this->assertEquals($val, $t2->{$key}, "Incorrect value for {$key}");
+			}
+		}
+	}
+	
 }

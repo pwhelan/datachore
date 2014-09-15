@@ -9,7 +9,10 @@ class Test extends \Datachore\Model
 	protected $properties = [
 		'name'		=> Type::String,
 		'ref'		=> Type::Key,
+		'counter'	=> Type::Integer,
 		'datetime'	=> Type::Timestamp,
-		'counter'	=> Type::Integer
+		'price'		=> Type::Double,
+		'is_deleted'	=> Type::Boolean,
+		'description'	=> Type::Blob
 	];
 }
