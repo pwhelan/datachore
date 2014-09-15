@@ -34,6 +34,17 @@ register_shutdown_function(function() {
 
 
 $app->get('/coverage', function() {
+$app->get('/remoteapisettings', function() {
+	print json_encode([
+		'application_id' => $_SERVER['APPLICATION_ID'],
+		'remote_api' => [
+			'host'	=> $_SERVER['REMOTE_API_HOST'],
+			'port'	=> $_SERVER['REMOTE_API_PORT'],
+			'id'	=> str_random(10) // 'IKLVcmdEFw' // 10 letter random hash
+		]
+	]);
+});
+
 	
 	$data = xdebug_get_code_coverage();
 	xdebug_stop_code_coverage();

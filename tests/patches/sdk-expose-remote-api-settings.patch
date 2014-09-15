@@ -1,0 +1,12 @@
+--- google_appengine/google/appengine/tools/devappserver2/php/setup.php	2014-08-25 15:24:44.000000000 -0700
++++ google_appengine/google/appengine/tools/devappserver2/php/setup.php	2014-08-25 15:24:44.000000000 -0700
+@@ -79,9 +79,6 @@
+       new \google\appengine\runtime\RemoteApiProxy(
+         getenv('REMOTE_API_HOST'), getenv('REMOTE_API_PORT'),
+         getenv('REMOTE_REQUEST_ID')));
+-    $unsetEnv('REMOTE_API_HOST');
+-    $unsetEnv('REMOTE_API_PORT');
+-    $unsetEnv('REMOTE_REQUEST_ID');
+   };
+ 
+   $setupBuiltins = function() {
