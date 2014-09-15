@@ -12,6 +12,90 @@ $app = new Slim\Slim;
 $datastore = new Datachore\Datastore\GoogleRemoteApi;
 
 
+if (extension_loaded('xdebug'))
+{
+	xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+}
+
+register_shutdown_function(function() {
+	
+	
+	$data = xdebug_get_code_coverage();
+	xdebug_stop_code_coverage();
+	
+	
+	$file = $_SERVER['SCRIPT_NAME'];
+	file_put_contents(
+		__DIR__ ."/coverage/". $file . '.' . time() . mt_rand(100, 10000000),
+		serialize($data)
+	);
+	
+});
+
+
+$app->get('/coverage', function() {
+	
+	$data = xdebug_get_code_coverage();
+	xdebug_stop_code_coverage();
+	
+	$files  = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator(
+			__DIR__.'/coverage',
+			FilesystemIterator::SKIP_DOTS
+		),
+		RecursiveIteratorIterator::SELF_FIRST
+	);
+	
+	$coverage = [];
+	
+	foreach ($files as $file) {
+		
+		$data = unserialize(file_get_contents($file));
+		unlink($file);
+		unset($file);
+		$filter = new PHP_CodeCoverage_Filter();
+		
+		foreach ($data as $file => $lines)
+		{
+			if (!isset($coverage[$file]))
+			{
+				$coverage[$file] = $lines;
+				/*
+				[
+					'md5' => md5_file($file),
+					'coverage' => $lines
+				];
+				*/
+			}
+			else
+			{
+				foreach ($lines as $line => $flag)
+				{
+					/*
+					if (
+						!isset($coverage[$file]['coverage'][$line]) ||
+						$flag > $coverage[$file]['coverage'][$line]
+					)
+					{
+						$coverage[$file]['coverage'][$line] = $flag;
+					}
+					*/
+					if (
+						!isset($coverage[$file][$line]) ||
+						$flag > $coverage[$file][$line]
+					)
+					{
+						$coverage[$file][$line] = $flag;
+					}
+				}
+			}
+		}
+	}
+	
+	print serialize($coverage);
+});
+
+
 $app->post('/test/collection', function() use ($app) {
 	
 	$tests = new Datachore\Collection;

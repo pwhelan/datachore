@@ -209,4 +209,41 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 		}
 	}
 	
+	
+	/**
+	 * Runs the test case and collects the results in a TestResult object.
+	 * If no TestResult object is passed a new one will be created.
+	 *
+	 * @param  PHPUnit_Framework_TestResult $result
+	 * @return PHPUnit_Framework_TestResult
+	 * @throws InvalidArgumentException
+	 */
+	public function run(PHPUnit_Framework_TestResult $result = NULL)
+	{
+		if ($result === NULL) {
+			$result = $this->createResult();
+		}
+		
+		$this->collectCodeCoverageInformation = $result->getCollectCodeCoverageInformation();
+		parent::run($result);
+		
+		if ($this->collectCodeCoverageInformation)
+		{
+			try
+			{
+				$resp = Guzzlehttp\get("http://127.0.0.1:8080/coverage");
+				$coverage = unserialize($resp->getBody());
+				
+				$result->getCodeCoverage()->append($coverage, $this);
+				//$result->getCodeCoverage()->setData($coverage);
+			}
+			catch(Exception $e)
+			{
+				//print_r($coverage);
+				print "Unable to grab remote coverage: ".get_class($e)." => ".$e->getMessage()."\n";
+			}
+		}
+		
+		return $result;
+	}
 }
