@@ -338,7 +338,7 @@ class Datachore
 					break;
 					
 				case $this->properties[$propertyName] instanceof Type\Boolean:
-					$value->setBooleanValue($rawValue);
+					$value->setBooleanValue((bool)$rawValue);
 					break;
 					
 				case $this->properties[$propertyName] instanceof Type\Integer:
@@ -361,7 +361,7 @@ class Datachore
 							$time = (int)($rawValue * 10000) * 100;
 							break;
 						case is_string($rawValue):
-							strtotime($rawValue) * (1000 * 1000);
+							$time = strtotime($rawValue) * (1000 * 1000);
 							break;
 					}
 					
