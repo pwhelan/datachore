@@ -432,7 +432,6 @@ class Datachore
 	{
 		$ifunc = strtolower($func);
 		return substr($ifunc, 0, 5) == 'where' ||
-			substr($ifunc, 0, 7) == 'orwhere' ||
 			substr($ifunc, 0, 8) == 'andwhere';
 	}
 	
@@ -443,14 +442,8 @@ class Datachore
 		
 		if (self::_isWhere($func))
 		{
-			if (substr($ifunc, 0, 7) == 'orwhere')
-			{
-				$chain = 'or';
-			}
-			else
-			{
-				$chain = 'and';
-			}
+			$chain = 'and';
+			
 			
 			if (substr($ifunc, 0, strlen($chain)) == $chain)
 			{
@@ -494,69 +487,11 @@ class Datachore
 					}
 				}
 			}
-			else
-			{
-				if (count($args) != 2)
-				{
-					throw new \Exception('Insufficient arguments for WHERE clause');
-				}
-				
-				$opstr = substr($ifunc, 5);
-				
-				switch(strtolower($opstr)) {
-				case 'eq':
-				case 'equals':
-					$operator = self::WHERE_EQ;
-					break;
-				case 'lt':
-				case 'lessthan':
-					$operator = self::WHERE_LT;
-					break;
-				case 'lteq':
-				case 'lessthanequal':
-				case 'lessthanequals':
-				case 'lessthanorequal':
-				case 'lessthanorequals':
-					$operator = self::WHERE_LTEQ;
-					break;
-				case 'gt':
-				case 'greaterthan':
-					$operator = self::WHERE_GT;
-					break;
-				case 'gteq':
-				case 'greaterthanequal':
-				case 'greaterthanequals':
-				case 'greaterthanorequal':
-				case 'greaterhanorequals':
-					$operator = self::WHERE_GTEQ;
-					break;
-				default:
-					throw new Exception('Unknown Operator');
-				}
-				
-				list($property, $value) = $args;
-			}
 			
 			$this->_where($property, $chain, $operator, $value);
 			return $this;
 		}
 		
-		if (count($this->__results) > 0)
-		{
-			return call_user_func_array(
-				[$this->__results[$this->__resIndex], $func],
-				$args
-			);
-		}
-		else if (isset($this->__changed[-1]))
-		{
-			return call_user_func_array(
-				[$this->__changed[-1], $func],
-				$args
-			);
-		}
-		
-		print "<pre>"; debug_print_backtrace();
 		throw new \Exception("No such method: {$func}");
 	}
 	
