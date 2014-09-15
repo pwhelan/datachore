@@ -154,10 +154,15 @@ class Datachore
 			{
 				$value = $this->updates[$key];
 			}
-			else
+			else if (isset($this->values[$key]))
 			{
 				$value = $this->values[$key];
 			}
+			else
+			{
+				continue;
+			}
+			
 			
 			$property = $entity->addProperty();
 			$propval = $property->mutableValue();
