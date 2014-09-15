@@ -194,7 +194,7 @@ class Datachore
 							$time = (int)($value * 10000) * 100;
 							break;
 						case is_string($value):
-							strtotime($value) * (1000 * 1000);
+							$time = strtotime($value) * (1000 * 1000);
 							break;
 					}
 					
