@@ -162,7 +162,25 @@ class Model extends Datachore
 		{
 			if (isset($this->updates[$key]) && !isset($this->foreign[$key]))
 			{
-				$ret[$key] = $this->updates[$key];
+				if ($this->properties[$key] instanceof Type\Timestamp)
+				{
+					$val = $this->updates[$key];
+					switch(true)
+					{
+						case $val instanceof \DateTime:
+							$val = $val->getTimestamp();
+						case is_numeric($val):
+							break;
+						case is_string($val):
+							$val = strtotime($val);
+							break;
+					}
+					$ret[$key] = $val;
+				}
+				else
+				{
+					$ret[$key] = $this->updates[$key];
+				}
 			}
 			else if (isset($this->foreign[$key]))
 			{
@@ -182,6 +200,11 @@ class Model extends Datachore
 							'kind'	=> $val->getPathElement(0)->getKind(),
 							'id'	=> $val->getPathElement(0)->getId()
 						];
+					}
+					// Interim fix for timestamp values
+					else if ($this->properties[$key] instanceof Type\Timestamp)
+					{
+						$ret[$key] = $val / (1000 * 1000);
 					}
 					else
 					{

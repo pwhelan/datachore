@@ -18,6 +18,8 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				break;
 			}
 		}
+		
+		date_default_timezone_set('GMT');
 	}
 	
 	public function testInsert()
@@ -188,7 +190,16 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 		{
 			foreach ($value as $key => $val)
 			{
-				$this->assertEquals($val, $tests[$idx]->{$key});
+				if ($key == 'datetime' && !is_numeric($val))
+				{
+					$val = strtotime($val);
+				}
+				
+				$this->assertEquals(
+					$val,
+					$tests[$idx]->{$key},
+					"Test[$idx]: value for {$key} does not match"
+				);
 			}
 		}
 		
@@ -201,7 +212,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 			
 			foreach ($test as $key => $val)
 			{
-				$this->assertEquals($val, $t2->{$key}, "Incorrect value for {$key}");
+				$this->assertEquals($val, $t2->{$key}, "Test[$idx]: Incorrectly retrieved value for {$key}");
 			}
 		}
 	}
