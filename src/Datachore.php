@@ -177,7 +177,7 @@ class Datachore
 					$propval->setIntegerValue($value);
 					break;
 				case $this->properties[$key] instanceof Type\Boolean:
-					$propval->setBooleanValue($value);
+					$propval->setBooleanValue((bool)$value);
 					break;
 				case $this->properties[$key] instanceof Type\Double:
 					$propval->setDoubleValue($value);
