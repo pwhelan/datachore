@@ -11,6 +11,30 @@ use model\Reference;
 $app = new Slim\Slim;
 $datastore = new Datachore\Datastore\GoogleRemoteApi;
 
+
+$app->post('/test/collection', function() use ($app) {
+	
+	$tests = new Datachore\Collection;
+	
+	
+	foreach ($app->request->post('names') as $name)
+	{
+		$test = new Test;
+		$test->name = $name;
+		
+		$tests[] = $test;
+	}
+	
+	
+	$tests->save();
+	print json_encode($tests->map(
+		function($test) {
+			return $test->toArray();
+		}
+	)->toArray());
+	
+});
+
 $app->get('/test/insert/(:name)/(:counter)', function($name, $counter) {
 	
 	$test = new Test;

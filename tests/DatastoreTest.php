@@ -125,4 +125,31 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 			throw new Exception("ERROR: ".get_class($e), 0, $e);
 		}
 	}
+	
+	public function testSaveCollection()
+	{
+		$objects = json_decode(
+			Guzzlehttp\post('http://127.0.0.1:8080/test/collection',[
+				'body'	=> ['names' => [
+					'redfish',
+					'bluefish',
+					'deadfish',
+					'rudefish'
+				]]
+			])
+			->getBody()
+		);
+		
+		
+		$this->assertEquals($objects[0]->name, "redfish");
+		$this->assertEquals($objects[1]->name, "bluefish");
+		$this->assertEquals($objects[2]->name, "deadfish");
+		$this->assertEquals($objects[3]->name, "rudefish");
+		
+		foreach ($objects as $object)
+		{
+			$this->assertObjectHasAttribute("id", $object);
+			$this->assertObjectHasAttribute("name", $object);
+		}
+	}
 }
