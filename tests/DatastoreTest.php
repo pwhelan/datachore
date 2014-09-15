@@ -4,9 +4,6 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 {
 	public static function setUpBeforeClass()
 	{
-		// Clear code coverage
-		$resp = Guzzlehttp\get("http://127.0.0.1:8080/coverage");
-		
 		for ($i = 0; $i < 128; $i++)
 		{
 			$fp = @fsockopen("127.0.0.1", 8080, $errno, $errstr);
