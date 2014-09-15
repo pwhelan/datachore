@@ -1,0 +1,12 @@
+<phpunit>
+        <filter>
+                <whitelist processUncoveredFilesFromWhitelist="true">
+                        <directory suffix=".php">src/</directory>
+                        <exclude>
+                                <file>src/Datastore.php</file>
+                                <file>src/Datastore/GoogleClientApi.php</file>
+                                <file>src/Datastore/GoogleRemoteApi.php</file>
+                        </exclude>
+                </whitelist>
+        </filter>
+</phpunit>

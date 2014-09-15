@@ -385,13 +385,6 @@ class Datachore
 		return $this;
 	}
 	
-	public static function all()
-	{
-		$_class = get_called_class();
-		$instance = new $_class;
-		return $instance->get();
-	}
-	
 	public function first()
 	{
 		$this->_query->setLimit(1);
