@@ -7,7 +7,7 @@ abstract class Datastore
 	protected $_datasetId;
 	protected static $_instance;
 	
-	final public function __construct(array $config = [])
+	public function __construct(array $config = [])
 	{
 		$this->_datasetId = isset($config['datasetId']) ?
 			$config['datasetId'] : $_SERVER['APPLICATION_ID'];
