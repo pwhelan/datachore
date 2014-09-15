@@ -2,8 +2,11 @@
 
 class DatastoreTest extends PHPUnit_Framework_TestCase
 {
-	public function testEnvironment()
+	public static function setUpBeforeClass()
 	{
+		// Clear code coverage
+		$resp = Guzzlehttp\get("http://127.0.0.1:8080/coverage");
+		
 		for ($i = 0; $i < 128; $i++)
 		{
 			$fp = @fsockopen("127.0.0.1", 8080, $errno, $errstr);
@@ -18,17 +21,6 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				break;
 			}
 		}
-		
-		$pid = file_get_contents(__DIR__.'/../appengine.pid');
-		print "PID = {$pid}\n";
-		print "LOG FILE = \n".file_get_contents(__DIR__.'/../out.log');
-		print "ERR FILE = \n".file_get_contents(__DIR__.'/../err.log');
-		if (!file_exists('/proc/'.trim($pid)))
-		{
-			print "NO APPENGINE\n";
-		}
-		passthru("ps auwx");
-		passthru("netstat -na --tcp");
 	}
 	
 	public function testInsert()
@@ -42,11 +34,11 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 		}
 		catch (GuzzleHttp\Exception\ServerException $e)
 		{
-			throw new Exception("Server error: ".$e->getResponse()->getBody());
+			throw new Exception("Server error: ".$e->getResponse()->getBody(), 0, $e);
 		}
 		catch (Exception $e)
 		{
-			throw new Exception("ERROR: ".get_class($e));
+			throw new Exception("ERROR: ".get_class($e), 0, $e);
 		}
 	}
 	
