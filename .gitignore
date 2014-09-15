@@ -2,3 +2,6 @@
 /vendor/
 composer.lock
 /google_appengine/
+/data/
+/coverage/
+/tests/coverage/
