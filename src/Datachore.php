@@ -82,26 +82,24 @@ class Datachore
 		
 		$mutation = $commit->mutableDeprecatedMutation();
 		
-		return [$commit, $mutation];
+		return (object)['commit' => $commit, 'mutation' => $mutation, 'insertauto' => []];
 	}
 	
-	public function endSave($commit, $mutation, $collection = null)
+	public function endSave($transaction, $collection = null)
 	{
-		$rc = $this->datastore()->commit($this->datasetId(), $commit);
+		$rc = $this->datastore()->commit(
+			$this->datasetId(),
+			$transaction->commit
+		);
 		
 		if ($collection)
 		{
-			$insertsIds = $mutation->getInsertAutoIdList();
+			$insertIds = $transaction->mutation->getInsertAutoIdList();
 			for ($i = 0; $i < count($insertIds); $i++)
 			{
-				foreach ($collection as $model)
-				{
-					if ($model->_opertion == $insertIds[$i])
-					{
-						$rc->getDeprecatedMutationResult()
-							->getInsertAutoIdKey($i);
-					}
-				}
+				$transaction->insertauto[$i]->id =
+					$rc->getDeprecatedMutationResult()
+						->getInsertAutoIdKey($i);
 			}
 		}
 		else
@@ -116,11 +114,18 @@ class Datachore
 		return $rc;
 	}
 	
-	public function save($mutation = null)
+	public function save($transaction = null)
 	{
-		if (!$mutation)
+		if (!$transaction)
 		{
-			list($commit, $mutation) = $this->startSave();
+			//list($commit, $mutation) = $this->startSave();
+			$t = $this->startSave();
+			$commit = $t->commit;
+			$mutation = $t->mutation;
+		}
+		else
+		{
+			$mutation = $transaction->mutation;
 		}
 		
 		
@@ -131,10 +136,12 @@ class Datachore
 		}
 		else
 		{
-			//$mutation->setOp(\google\appengine\datastore\v4\Mutation\Operation::INSERT);
-			//$this->_GoogleKeyValue($mutation->mutableKey());
-			
 			$entity = $mutation->addInsertAutoId();
+			if ($transaction)
+			{
+				$transaction->insertauto[] = $this;
+			}
+			
 			$this->_GoogleKeyValue($entity->mutableKey());
 		}
 		
@@ -219,7 +226,7 @@ class Datachore
 		
 		if (isset($commit))
 		{
-			$this->endSave($commit, $mutation);
+			$this->endSave((object)['commit' => $commit, 'mutation' => $mutation]);
 		}
 		
 		return true;
