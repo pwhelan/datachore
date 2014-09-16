@@ -10,10 +10,13 @@ before_script:
     - patch -p0 < tests/patches/sdk-expose-remote-api-settings.patch
 
 script:
-    - bash -c './google_appengine/dev_appserver.py tests/ --php_executable_path=$HOME/.phpenv/versions/$(phpenv version-name)/bin/php-cgi --skip_sdk_update_check 1>out.log 2>err.log & echo $! > appengine.pid'
-    - vendor/bin/phpunit tests/
+    - mkdir -p logs
+    - bash -c './google_appengine/dev_appserver.py tests/ --php_executable_path=$HOME/.phpenv/versions/$(phpenv version-name)/bin/php-cgi --skip_sdk_update_check 1>logs/out.log 2>logs/err.log & echo $! > appengine.pid'
+    - vendor/bin/phpunit --coverage-clover logs/build-clover.xml tests/
 
 after_script:
     - bash -c 'cat appengine.pid | xargs kill'
-    - cat out.log
+    #never has anything interesting
+    #- cat out.log
     - cat err.log
+    - php vendor/bin/coveralls -v
