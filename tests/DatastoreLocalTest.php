@@ -336,4 +336,68 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 			$this->assertEquals("Not as Amicable", $test->description);
 		}
 	}
+	
+	public function testValueToString()
+	{
+		$types = [
+			[
+				'name'		=> 'boolean',
+				'value'		=> false,
+				'string'	=> 'false'
+			],
+			[
+				'name'		=> 'integer',
+				'value'		=> 1337,
+				'string'	=> '1337'
+			],
+			[
+				'name'		=> 'double',
+				'value'		=> 13.37,
+				'string'	=> '13.37'
+			],
+			[
+				'name'		=> 'TimestampMicroseconds',
+				'value'		=> (new DateTime("1983-03-30"))->getTimestamp() * (1000 * 1000),
+				'string'	=> '1983-03-30T00:00:00+00:00',
+			],
+			[
+				'name'		=> 'string',
+				'value'		=> "Doctor Who: Master of the Time Lords",
+				'string'	=> "Doctor Who: Master of the Time Lords",
+			],
+			[
+				'name'		=> 'blob',
+				'value'		=> "Flash: Saviour of the Universe",
+				'string'	=> "Flash: Saviour of the Universe",
+			]
+		];
+		
+		$type = [];
+		$type['add'] = 1;
+		$type['name'] = 'key';
+		$type['value'] = new \google\appengine\datastore\v4\Key;
+		$type['string'] = '[Key={partitionId: , path: {kind: You\Dont\Know, id: 31337 }}]';
+		$path = $type['value']->addPathElement();
+		$path->setId("31337");
+		$path->setKind("You\\Dont\\Know");
+		
+		$types[] = $type;
+		
+		foreach ($types as $type)
+		{
+			$gvalue = new \google\appengine\datastore\v4\Value;
+			if (@$type['add'])
+			{
+				$avalue = $gvalue->{'mutable'.ucfirst($type['name'].'Value')}();
+				$avalue->mergeFrom($type['value']);
+			}
+			else
+			{
+				$gvalue->{'set'.ucfirst($type['name'].'Value')}($type['value']);
+			}
+			
+			$value = new Datachore\Value($gvalue);
+			$this->assertEquals($type['string'], (string)$value, "__toString failed for {$type['name']}");
+		}
+	}
 }
