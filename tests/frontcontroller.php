@@ -11,30 +11,54 @@ use model\Reference;
 $app = new Slim\Slim;
 $datastore = new Datachore\Datastore\GoogleRemoteApi;
 
+global $CoverageOn;
+$CoverageOn = false;
+
 
 if (extension_loaded('xdebug'))
 {
-	xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+	$memcache = new Memcache;
+	$CoverageOn = $memcache->get('coverage_enabled');
+	
+	
+	if ($coverage_enabled)
+	{
+		xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+	}
 }
 
 register_shutdown_function(function() {
 	
-	
-	$data = xdebug_get_code_coverage();
-	xdebug_stop_code_coverage();
+	global $CoverageOn;
 	
 	
-	$file = $_SERVER['SCRIPT_NAME'];
-	file_put_contents(
-		__DIR__ ."/coverage/". $file . '.' . time() . mt_rand(100, 10000000),
-		serialize($data)
-	);
-	
+	if ($CoverageOn)
+	{
+		$data = xdebug_get_code_coverage();
+		xdebug_stop_code_coverage();
+		
+		
+		$file = $_SERVER['SCRIPT_NAME'];
+		file_put_contents(
+			__DIR__ ."/coverage/". $file . '.' . time() . mt_rand(100, 10000000),
+			serialize($data)
+		);
+	}
 });
 
 
-$app->get('/coverage', function() {
+$app->get('/coverage/dump', function() {
 	
+	global $CoverageOn;
+	
+	
+	if (!$CoverageOn)
+	{
+		return;
+	}
+	
+	$CoverageOn = false;
+		
 	$data = xdebug_get_code_coverage();
 	xdebug_stop_code_coverage();
 	
@@ -95,6 +119,16 @@ $app->get('/coverage', function() {
 	print serialize($coverage);
 });
 
+$app->get('/coverage/(:state)', function($state) {
+	
+	global $CoverageOn;
+	$CoverageOn = false;
+	
+	
+	$memcache = new Memcache;
+	$memcache->set('coverage_enabled',
+		$state == 'on' || ($state && $state != 'off') ? true : false);
+});
 
 $app->post('/test/collection', function() use ($app) {
 	
