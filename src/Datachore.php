@@ -163,24 +163,32 @@ class Datachore
 				continue;
 			}
 			
+			if ($value instanceof Value)
+			{
+				$value = $value->saveValue();
+			}
+			
 			
 			$property = $entity->addProperty();
+			$property->setName($key);
+			
+			
 			$propval = $property->mutableValue();
 			
 			
 			switch(true)
 			{
 				case $this->properties[$key] instanceof Type\String:
-					$propval->setStringValue($value);
+					$propval->setStringValue((string)$value);
 					break;
 				case $this->properties[$key] instanceof Type\Integer:
-					$propval->setIntegerValue($value);
+					$propval->setIntegerValue((int)$value);
 					break;
 				case $this->properties[$key] instanceof Type\Boolean:
 					$propval->setBooleanValue((bool)$value);
 					break;
 				case $this->properties[$key] instanceof Type\Double:
-					$propval->setDoubleValue($value);
+					$propval->setDoubleValue((double)$value);
 					break;
 				case $this->properties[$key] instanceof Type\Timestamp:
 					
@@ -196,16 +204,28 @@ class Datachore
 						case is_string($value):
 							$time = strtotime($value) * (1000 * 1000);
 							break;
+						case $value == 0:
+							$time = null;
+							break;
 					}
 					
-					$propval->setTimestampMicrosecondsValue($time);
+					if ($time)
+					{
+						$propval->setTimestampMicrosecondsValue($time);
+					}
+					
 					break;
 				case $this->properties[$key] instanceof Type\Blob:
 					$propval->setBlobValue($value);
 					break;
+				// TODO: fully working support for BlobKey.
+				// Might be difficult since PHP uses GCS
+				// exclusively.
+				// @codeCoverageIgnoreStart
 				case $this->properties[$key] instanceof Type\BlobKey:
 					$propval->setBlobKeyValue($value);
 					break;
+				// @codeCoverageIgnoreEnd
 				case $this->properties[$key] instanceof Type\Key:
 					if ($value)
 					{
@@ -214,18 +234,21 @@ class Datachore
 							$keyval = $propval->mutableKeyValue();
 							$keyval->mergeFrom($value);
 						}
-						else if ($value instanceof Model)
+						else
 						{
-							$this->_GoogleKeyValue($propval->mutableKeyValue(), $value);
+							// @codeCoverageIgnoreStart
+							throw new \Exception("Illegal key for: {$key}");
+							// @codeCoverageIgnoreEnd
 						}
 					}
 					break;
 				
 				default:
+					// @codeCoverageIgnoreStart
 					throw new \Exception("ILLEGAL ARGZZZZ!");
+					// @codeCoverageIgnoreEnd
 			}
 			
-			$property->setName($key);
 		}
 		
 		
@@ -328,10 +351,12 @@ class Datachore
 				case $this->properties[$propertyName] instanceof Type\Blob:
 					$value->setBlobValue($rawValue);
 					break;
-					
+				
+				// @codeCoverageIgnoreStart
 				case $this->properties[$propertyName] instanceof Type\BlobKey:
 					$value->setBlobKeyValue($rawValue);
 					break;
+				// @codeCoverageIgnoreEnd
 					
 				case $this->properties[$propertyName] instanceof Type\String:
 					$value->setStringValue($rawValue);
@@ -383,13 +408,6 @@ class Datachore
 		
 		$propFilter->setOperator($operatorEnum);
 		return $this;
-	}
-	
-	public static function all()
-	{
-		$_class = get_called_class();
-		$instance = new $_class;
-		return $instance->get();
 	}
 	
 	public function first()

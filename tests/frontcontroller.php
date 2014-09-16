@@ -11,6 +11,135 @@ use model\Reference;
 $app = new Slim\Slim;
 $datastore = new Datachore\Datastore\GoogleRemoteApi;
 
+global $CoverageOn;
+$CoverageOn = false;
+
+
+if (extension_loaded('xdebug'))
+{
+	$memcache = new Memcache;
+	$CoverageOn = $memcache->get('coverage_enabled');
+	
+	
+	if ($coverage_enabled)
+	{
+		xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+	}
+}
+
+register_shutdown_function(function() {
+	
+	global $CoverageOn;
+	
+	
+	if ($CoverageOn)
+	{
+		$data = xdebug_get_code_coverage();
+		xdebug_stop_code_coverage();
+		
+		
+		$file = $_SERVER['SCRIPT_NAME'];
+		file_put_contents(
+			__DIR__ ."/coverage/". $file . '.' . time() . mt_rand(100, 10000000),
+			serialize($data)
+		);
+	}
+});
+
+
+$app->get('/remoteapisettings', function() {
+	print json_encode([
+		'application_id' => $_SERVER['APPLICATION_ID'],
+		'remote_api' => [
+			'host'	=> $_SERVER['REMOTE_API_HOST'],
+			'port'	=> $_SERVER['REMOTE_API_PORT'],
+			'id'	=> str_random(10) // 'IKLVcmdEFw' // 10 letter random hash
+		]
+	]);
+});
+
+$app->get('/coverage/dump', function() {
+	
+	global $CoverageOn;
+	
+	
+	if (!$CoverageOn)
+	{
+		return;
+	}
+	
+	$CoverageOn = false;
+		
+	$data = xdebug_get_code_coverage();
+	xdebug_stop_code_coverage();
+	
+	$files  = new RecursiveIteratorIterator(
+		new RecursiveDirectoryIterator(
+			__DIR__.'/coverage',
+			FilesystemIterator::SKIP_DOTS
+		),
+		RecursiveIteratorIterator::SELF_FIRST
+	);
+	
+	$coverage = [];
+	
+	foreach ($files as $file) {
+		
+		$data = unserialize(file_get_contents($file));
+		unlink($file);
+		unset($file);
+		$filter = new PHP_CodeCoverage_Filter();
+		
+		foreach ($data as $file => $lines)
+		{
+			if (!isset($coverage[$file]))
+			{
+				$coverage[$file] = $lines;
+				/*
+				[
+					'md5' => md5_file($file),
+					'coverage' => $lines
+				];
+				*/
+			}
+			else
+			{
+				foreach ($lines as $line => $flag)
+				{
+					/*
+					if (
+						!isset($coverage[$file]['coverage'][$line]) ||
+						$flag > $coverage[$file]['coverage'][$line]
+					)
+					{
+						$coverage[$file]['coverage'][$line] = $flag;
+					}
+					*/
+					if (
+						!isset($coverage[$file][$line]) ||
+						$flag > $coverage[$file][$line]
+					)
+					{
+						$coverage[$file][$line] = $flag;
+					}
+				}
+			}
+		}
+	}
+	
+	print serialize($coverage);
+});
+
+$app->get('/coverage/(:state)', function($state) {
+	
+	global $CoverageOn;
+	$CoverageOn = false;
+	
+	
+	$memcache = new Memcache;
+	$memcache->set('coverage_enabled',
+		$state == 'on' || ($state && $state != 'off') ? true : false);
+});
 
 $app->post('/test/collection', function() use ($app) {
 	
@@ -124,28 +253,21 @@ $app->post('/query/(:kind)', function($kind) use ($app) {
 	
 	
 	$where = $app->request->post('where');
-	if (empty($where))
-	{
-		$query = call_user_func(['model\\'.$kind, 'all']);
-	}
-	else
-	{
-		$query = call_user_func(['model\\'.$kind, 'where'], function($q) use ($where, $operators) {
-			foreach ($where as $cond)
-			{
-				$op = in_array($cond['op'], array_keys($operators)) ?
-					$operators[$cond['op']] : $op;
-				
-				$q->andWhere($cond['col'], $op, $cond['value']);
-			}
+	$query = call_user_func(['model\\'.$kind, 'where'], function($q) use ($where, $operators) {
+		foreach ($where as $cond)
+		{
+			$op = in_array($cond['op'], array_keys($operators)) ?
+				$operators[$cond['op']] : $op;
 			
-		})->get();
-	}
+			$q->andWhere($cond['col'], $op, $cond['value']);
+		}
+		
+	})->get();
 	
 	
 	print json_encode($query->map(function($result) {
 		return $result->toArray();
-	})->toArray(), JSON_PRETTY_PRINT);
+	})->toArray());
 });
 
 $app->get('/test/(:id)', function($id) use ($app) {
