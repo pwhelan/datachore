@@ -50,7 +50,7 @@ Getting Started
 ### Creating model files
 
 To create a new Entity kind you need to back it with a class extended from
-Datachore\Model. Here is the mail model used in the tests, model\Test:
+Datachore\Model. Here is the main model used in the tests; model\Test.
 
 ```php
 <?php
@@ -61,6 +61,7 @@ use \Datachore\Type;
 
 class Test extends \Datachore\Model
 {
+        // Defines the type for each property. This is mandatory.
 	protected $properties = [
 		'name'		=> Type::String,
 		'ref'		=> Type::Key,
@@ -73,7 +74,8 @@ class Test extends \Datachore\Model
 }
 ```
 
-The Key property usually refers to a model\Reference:
+The Key property usually refers to a model\Reference. In the tests the model
+model\Reference is used.
 
 ```php
 <?php
@@ -84,11 +86,15 @@ use Datachore\Type;
 
 class Reference extends Test
 {
+        protected $properties = [
+                'name' => Type::String
+        ];
 }
 ```
 
-You can either manually load these model files or create them in the subdirectory
-model and use a psr-4 loader that is setup in your composer.json file.
+You can either manually load these model files or create them in a subdirectory
+and use a psr-4 loader that is setup in your composer.json file. In this example
+we use the subdirectory model.
 
 ```json
 {
