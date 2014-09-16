@@ -1,0 +1,12 @@
+--- google_appengine/dev_appserver.py	2014-08-25 15:24:44.000000000 -0700
++++ google_appengine/dev_appserver.py	2014-09-15 18:01:01.000000000 -0700
+@@ -20,7 +20,8 @@
+ import os
+ import sys
+ 
+-
++import logging
++logging.basicConfig( filename='logs/appengine.log', filemode='a' )
+ 
+ 
+ sys_path = sys.path
