@@ -383,6 +383,10 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				
 				$result->getCodeCoverage()->append($coverage, $this);
 			}
+			catch (GuzzleHttp\Exception\ServerException $e)
+			{
+				throw new Exception("Coverage Server error: ".$e->getResponse()->getBody(), 0, $e);
+			}
 			catch(Exception $e)
 			{
 				print "Unable to grab remote coverage: ".get_class($e)." => ".$e->getMessage()."\n";
