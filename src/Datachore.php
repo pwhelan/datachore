@@ -203,9 +203,14 @@ class Datachore
 				case $this->properties[$key] instanceof Type\Blob:
 					$propval->setBlobValue($value);
 					break;
+				// TODO: fully working support for BlobKey.
+				// Might be difficult since PHP uses GCS
+				// exclusively.
+				// @codeCoverageIgnoreStart
 				case $this->properties[$key] instanceof Type\BlobKey:
 					$propval->setBlobKeyValue($value);
 					break;
+				// @codeCoverageIgnoreEnd
 				case $this->properties[$key] instanceof Type\Key:
 					if ($value)
 					{
@@ -214,15 +219,19 @@ class Datachore
 							$keyval = $propval->mutableKeyValue();
 							$keyval->mergeFrom($value);
 						}
-						else if ($value instanceof Model)
+						else
 						{
-							$this->_GoogleKeyValue($propval->mutableKeyValue(), $value);
+							// @codeCoverageIgnoreStart
+							throw new \Exception("Illegal key for: {$key}");
+							// @codeCoverageIgnoreEnd
 						}
 					}
 					break;
 				
 				default:
+					// @codeCoverageIgnoreStart
 					throw new \Exception("ILLEGAL ARGZZZZ!");
+					// @codeCoverageIgnoreEnd
 			}
 			
 			$property->setName($key);
@@ -328,10 +337,12 @@ class Datachore
 				case $this->properties[$propertyName] instanceof Type\Blob:
 					$value->setBlobValue($rawValue);
 					break;
-					
+				
+				// @codeCoverageIgnoreStart
 				case $this->properties[$propertyName] instanceof Type\BlobKey:
 					$value->setBlobKeyValue($rawValue);
 					break;
+				// @codeCoverageIgnoreEnd
 					
 				case $this->properties[$propertyName] instanceof Type\String:
 					$value->setStringValue($rawValue);
