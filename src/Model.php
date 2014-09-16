@@ -83,7 +83,7 @@ class Model extends Datachore
 		
 		if (isset($this->values[$key]))
 		{
-			return $this->values[$key]->rawValue();
+			return $this->values[$key]->saveValue();
 		}
 		
 		if (isset($this->properties[$key]))
