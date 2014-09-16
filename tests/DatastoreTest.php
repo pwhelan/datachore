@@ -312,8 +312,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				{
 					return $result->description == 'ipso lorum gryphyndor';
 				}
-			],
-			[]
+			]
 		];
 		
 		
@@ -368,23 +367,28 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 		}
 		
 		$this->collectCodeCoverageInformation = $result->getCollectCodeCoverageInformation();
+		if ($this->collectCodeCoverageInformation)
+		{
+			GuzzleHttp\get('http://127.0.0.1:8080/coverage/on');
+		}
+		
 		parent::run($result);
 		
 		if ($this->collectCodeCoverageInformation)
 		{
 			try
 			{
-				$resp = Guzzlehttp\get("http://127.0.0.1:8080/coverage");
+				$resp = Guzzlehttp\get("http://127.0.0.1:8080/coverage/dump");
 				$coverage = unserialize($resp->getBody());
 				
 				$result->getCodeCoverage()->append($coverage, $this);
-				//$result->getCodeCoverage()->setData($coverage);
 			}
 			catch(Exception $e)
 			{
-				//print_r($coverage);
 				print "Unable to grab remote coverage: ".get_class($e)." => ".$e->getMessage()."\n";
 			}
+			
+			GuzzleHttp\get('http://127.0.0.1:8080/coverage/off');
 		}
 		
 		return $result;
