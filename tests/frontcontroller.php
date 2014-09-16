@@ -242,28 +242,21 @@ $app->post('/query/(:kind)', function($kind) use ($app) {
 	
 	
 	$where = $app->request->post('where');
-	if (empty($where))
-	{
-		$query = call_user_func(['model\\'.$kind, 'all']);
-	}
-	else
-	{
-		$query = call_user_func(['model\\'.$kind, 'where'], function($q) use ($where, $operators) {
-			foreach ($where as $cond)
-			{
-				$op = in_array($cond['op'], array_keys($operators)) ?
-					$operators[$cond['op']] : $op;
-				
-				$q->andWhere($cond['col'], $op, $cond['value']);
-			}
+	$query = call_user_func(['model\\'.$kind, 'where'], function($q) use ($where, $operators) {
+		foreach ($where as $cond)
+		{
+			$op = in_array($cond['op'], array_keys($operators)) ?
+				$operators[$cond['op']] : $op;
 			
-		})->get();
-	}
+			$q->andWhere($cond['col'], $op, $cond['value']);
+		}
+		
+	})->get();
 	
 	
 	print json_encode($query->map(function($result) {
 		return $result->toArray();
-	})->toArray(), JSON_PRETTY_PRINT);
+	})->toArray());
 });
 
 $app->get('/test/(:id)', function($id) use ($app) {
