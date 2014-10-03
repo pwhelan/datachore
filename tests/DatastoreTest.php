@@ -49,6 +49,9 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 					->getBody()
 			);
 			
+			$this->assertObjectHasAttribute('id', $insert);
+			sleep(1);
+			
 			$update = json_decode(
 				Guzzlehttp\get("http://127.0.0.1:8080/test/update/{$insert->id}/foobar")
 					->getBody()
@@ -98,6 +101,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 					->getBody()
 			);
 			
+			sleep(1);
 			$test = json_decode(
 				Guzzlehttp\get("http://127.0.0.1:8080/test/update/{$objects->test->id}/supermeatboy")
 					->getBody()
