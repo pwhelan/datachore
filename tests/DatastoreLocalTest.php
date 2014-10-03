@@ -144,6 +144,8 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$test = model\Test::where('counter', '<=', self::$counter)
 			->first();
 		
+		$this->assertNotNull($test);
+		
 		$ref = new model\Reference;
 		$ref->name = "Some leech called Todd";
 		$ref->save();
