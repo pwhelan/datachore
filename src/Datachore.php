@@ -472,6 +472,18 @@ class Datachore
 		return $collection;
 	}
 	
+	/**
+	 * This function is highly dangerous, since GAE will actually
+	 * force the use of pagination
+	 */
+	public static function all()
+	{
+		$_class = get_called_class();
+		$instance = new $_class;
+		
+		return $instance->get();
+	}
+	
 	public static function find($id)
 	{
 		$_class = get_called_class();
