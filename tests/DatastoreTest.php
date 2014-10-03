@@ -165,7 +165,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 			],
 			[
 				'name'		=> 'Something Waitforit',
-				'datetime'	=> '1992-03-04',
+				'datetime'	=> (new DateTime('1992-03-04'))->getTimestamp(),
 				'counter'	=> -28324064,
 				'price'		=> -0.05,
 				'is_deleted'	=> false,

@@ -106,7 +106,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(self::$counter-1, $array['counter']);
 		$this->assertEquals(13.37, $array['price']);
 		$this->assertEquals("Friendly little bugger", $array['description']);
-		$this->assertEquals($now->getTimestamp(), $array['datetime']);
+		$this->assertEquals($now->getTimestamp(), $array['datetime']->getTimestamp());
 		
 		
 		$test->datetime = $test->datetime->getTimestamp();
