@@ -492,6 +492,33 @@ class Datachore
 		return $instance->where('id', '==', $id)->first();
 	}
 	
+	public function orderBy($propertyName, $order = 'asc')
+	{
+		$propertyOrder = $this->_query->addOrder();
+		$property = $propertyOrder->mutableProperty();
+		$property->setName($propertyName);
+		
+		$propertyOrder->setDirection((
+			$order == 'asc' ?
+				\google\appengine\datastore\v4\PropertyOrder\Direction::ASCENDING :
+				\google\appengine\datastore\v4\PropertyOrder\Direction::DESCENDING
+		));
+		
+		return $this;
+	}
+	
+	public function offset($offset)
+	{
+		$this->_query->setOffset($offset);
+		return $this;
+	}
+	
+	public function limit($limit)
+	{
+		$this->_query->setLimit($limit);
+		return $this;
+	}
+	
 	private static function _isWhere($func)
 	{
 		$ifunc = strtolower($func);
