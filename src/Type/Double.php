@@ -2,6 +2,6 @@
 
 namespace Datachore\Type;
 
-class Double
+class Double implements \Datachore\TypeInterface
 {
 }

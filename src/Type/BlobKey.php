@@ -2,6 +2,6 @@
 
 namespace Datachore\Type;
 
-class BlobKey
+class BlobKey implements \Datachore\TypeInterface
 {
 }

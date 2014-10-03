@@ -1,8 +1,7 @@
 <?php
 
 /** @TODO:
-*    * Allow setting keys directly with models and not with their keys, ie:
-*      $object->ref = $ref instead of $object->ref = $ref->key.
+*    * Get Sets to work correctly.
 */
 namespace Datachore;
 
@@ -76,6 +75,11 @@ class Model extends Datachore
 			
 			return $this->foreign[$key];
 		}
+		else if (!isset($this->values[$key]) && !isset($this->updates[$key]) && $this->properties[$key] instanceof Type\Set)
+		{
+			$this->updates[$key] = new \ArrayObject;
+			return $this->updates[$key];
+		}
 		else if (isset($this->updates[$key]))
 		{
 			return $this->updates[$key];
@@ -130,6 +134,24 @@ class Model extends Datachore
 		return isset($this->values[$key]) || isset($this->updates[$key]);
 	}
 	
+	public function getKey($key)
+	{
+		if (isset($this->properties[$key]) && $this->properties[$key] instanceof Type\Key)
+		{
+			if (isset($this->updates[$key]))
+			{
+				return $this->updates[$key];
+			}
+			else if (isset($this->values[$key]))
+			{
+				return $this->values[$key];
+			}
+			return null;
+		}
+		
+		throw new \Exception('Unknown Key: '.$key);
+	}
+	
 	public function toArray()
 	{
 		$ret = [];
@@ -142,27 +164,20 @@ class Model extends Datachore
 		
 		foreach ($this->properties as $key => $prop)
 		{
-			if (isset($this->updates[$key]) && !isset($this->foreign[$key]))
+			if ($prop instanceof Type\Set)
 			{
-				if ($this->properties[$key] instanceof Type\Timestamp)
+				if (isset($this->updates[$key]))
 				{
-					$val = $this->updates[$key];
-					switch(true)
-					{
-						case $val instanceof \DateTime:
-							$val = $val->getTimestamp();
-						case is_numeric($val):
-							break;
-						case is_string($val):
-							$val = strtotime($val);
-							break;
-					}
-					$ret[$key] = $val;
+					$ret[$key] = (array)$this->updates[$key];
 				}
 				else
 				{
-					$ret[$key] = $this->updates[$key];
+					//$ret[$key] = (array)$this->values[$key]->rawValue();
 				}
+			}
+			else if (isset($this->updates[$key]) && !isset($this->foreign[$key]))
+			{
+				$ret[$key] = $this->updates[$key];
 			}
 			else if (isset($this->foreign[$key]))
 			{

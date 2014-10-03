@@ -2,6 +2,6 @@
 
 namespace Datachore\Type;
 
-class Timestamp
+class Timestamp implements \Datachore\TypeInterface
 {
 }

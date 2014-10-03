@@ -2,6 +2,6 @@
 
 namespace Datachore\Type;
 
-class Integer
+class Integer implements \Datachore\TypeInterface
 {
 }

@@ -2,6 +2,6 @@
 
 namespace Datachore\Type;
 
-class String
+class String implements \Datachore\TypeInterface
 {
 }

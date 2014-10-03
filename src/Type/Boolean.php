@@ -2,6 +2,6 @@
 
 namespace Datachore\Type;
 
-class Boolean
+class Boolean implements \Datachore\TypeInterface
 {
 }

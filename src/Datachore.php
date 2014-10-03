@@ -75,7 +75,7 @@ class Datachore
 			$this->datasetId(),
 			$transactionRequest
 		);
-	
+		
 		$commit = $this->datastore()->Factory('CommitRequest');
 		$commit->setTransaction($transaction->getTransaction(2));
 		$commit->setMode(\google\appengine\datastore\v4\CommitRequest\Mode::TRANSACTIONAL);
@@ -114,35 +114,147 @@ class Datachore
 		return $rc;
 	}
 	
-	public function save($transaction = null)
+	private function _assignPropertyValue($propval, $property, $key, $value)
 	{
-		if (!$transaction)
+		if ($value instanceof Value)
 		{
-			//list($commit, $mutation) = $this->startSave();
-			$t = $this->startSave();
-			$commit = $t->commit;
-			$mutation = $t->mutation;
+			$value = $value->rawValue();
+			if ($property instanceof Type\Timestamp)
+			{
+				$value /= (1000 * 1000);
+			}
 		}
-		else
+		
+		switch(true)
 		{
-			$mutation = $transaction->mutation;
+			case $property instanceof Type\String:
+				$propval->setStringValue($value);
+				break;
+			
+			case $property instanceof Type\Integer:
+				$propval->setIntegerValue((int)$value);
+				break;
+			
+			case $property instanceof Type\Boolean:
+				$propval->setBooleanValue((bool)$value);
+				break;
+			
+			case $property instanceof Type\Double:
+				$propval->setDoubleValue((double)$value);
+				break;
+			
+			case $property instanceof Type\Timestamp:
+				
+				switch(true)
+				{
+					case $value instanceof \DateTime:
+						$time = $value->format('u') * (1000 * 1000) +
+							$value->getTimestamp() * (1000 * 1000);
+						break;
+					case is_numeric($value):
+						$time = (int)($value * 10000) * 100;
+						break;
+					case is_string($value):
+						$time = strtotime($value) * (1000 * 1000);
+						break;
+					default:
+						throw new \Exception('Unsupported time');
+				}
+				
+				$propval->setTimestampMicrosecondsValue($time);
+				break;
+			
+			case $property instanceof Type\Blob:
+				$propval->setBlobValue($value);
+				break;
+			
+			case $property instanceof Type\BlobKey:
+				$propval->setBlobKeyValue($value);
+				break;
+			
+			case $property instanceof Type\Key:
+				
+				if ($value instanceof Model)
+				{
+					$fkey = $value->key;
+				}
+				else if ($value instanceof \google\appengine\datastore\v4\Key)
+				{
+					$fkey = $value;
+				}
+				else if ($value instanceof \google\appengine\datastore\v4\Value)
+				{
+					$fkey = $value->getKeyValue();
+				}
+				else
+				{
+					$fkey = $this->getKey($key);
+				}
+				
+				if ($fkey && $fkey instanceof \google\appengine\datastore\v4\Key)
+				{
+					$keyval = $propval->mutableKeyValue();
+					$keyval->mergeFrom($fkey);
+				}
+				else if ($value)
+				{
+					if ($value instanceof \google\appengine\datastore\v4\Key)
+					{
+						$keyval = $propval->mutableKeyValue();
+						$keyval->mergeFrom($value);
+					}
+					else if ($value instanceof Value)
+					{
+						$keyval = $propval->mutableKeyValue();
+						$keyval->mergeFrom($value);
+					}
+					else if ($value instanceof Model)
+					{
+						$this->_GoogleKeyValue($propval->mutableKeyValue(), $value);
+					}
+					else
+					{
+						throw new \Exception("Unknown Key Type");
+					}
+				}
+				break;
+			
+			case $property instanceof Type\Set:
+				foreach ($value as $key => $val)
+				{
+					$lval = $propval->mutableListValue($key);
+					$this->_assignPropertyValue($lval, $property->type(), $key, $val);
+				}
+				break;
+			
+			default:
+				throw new \Exception("ILLEGAL ARGZZZZ!");
+		}
+		
+	}
+	
+	public function save($trans = null)
+	{
+		if (!$trans)
+		{
+			$trans = $this->startSave();
+			$singleSave = true;
 		}
 		
 		
 		if ($this->id)
 		{
-			$entity = $mutation->addUpdate();
+			$entity = $trans->mutation->addUpdate();
 			$this->_GoogleKeyValue($entity->mutableKey(), $this->id);
 		}
 		else
 		{
-			$entity = $mutation->addInsertAutoId();
-			if ($transaction)
-			{
-				$transaction->insertauto[] = $this;
-			}
+			//$mutation->setOp(\google\appengine\datastore\v4\Mutation\Operation::INSERT);
+			//$this->_GoogleKeyValue($mutation->mutableKey());
 			
+			$entity = $trans->mutation->addInsertAutoId();
 			$this->_GoogleKeyValue($entity->mutableKey());
+			$trans->insertauto[] = $this;
 		}
 		
 		
@@ -160,101 +272,20 @@ class Datachore
 			}
 			else
 			{
+				// No value..
 				continue;
 			}
 			
-			if ($value instanceof Value)
-			{
-				$value = $value->saveValue();
-			}
-			
-			
 			$property = $entity->addProperty();
-			$property->setName($key);
-			
-			
 			$propval = $property->mutableValue();
 			
-			
-			switch(true)
-			{
-				case $this->properties[$key] instanceof Type\String:
-					$propval->setStringValue((string)$value);
-					break;
-				case $this->properties[$key] instanceof Type\Integer:
-					$propval->setIntegerValue((int)$value);
-					break;
-				case $this->properties[$key] instanceof Type\Boolean:
-					$propval->setBooleanValue((bool)$value);
-					break;
-				case $this->properties[$key] instanceof Type\Double:
-					$propval->setDoubleValue((double)$value);
-					break;
-				case $this->properties[$key] instanceof Type\Timestamp:
-					
-					switch(true)
-					{
-						case $value instanceof \DateTime:
-							$time = $value->format('u') * (1000 * 1000) +
-								$value->getTimestamp() * (1000 * 1000);
-							break;
-						case is_numeric($value):
-							$time = (int)($value * 10000) * 100;
-							break;
-						case is_string($value):
-							$time = strtotime($value) * (1000 * 1000);
-							break;
-						case $value == 0:
-							$time = null;
-							break;
-					}
-					
-					if ($time)
-					{
-						$propval->setTimestampMicrosecondsValue($time);
-					}
-					
-					break;
-				case $this->properties[$key] instanceof Type\Blob:
-					$propval->setBlobValue($value);
-					break;
-				// TODO: fully working support for BlobKey.
-				// Might be difficult since PHP uses GCS
-				// exclusively.
-				// @codeCoverageIgnoreStart
-				case $this->properties[$key] instanceof Type\BlobKey:
-					$propval->setBlobKeyValue($value);
-					break;
-				// @codeCoverageIgnoreEnd
-				case $this->properties[$key] instanceof Type\Key:
-					if ($value)
-					{
-						if ($value instanceof \google\appengine\datastore\v4\Key)
-						{
-							$keyval = $propval->mutableKeyValue();
-							$keyval->mergeFrom($value);
-						}
-						else
-						{
-							// @codeCoverageIgnoreStart
-							throw new \Exception("Illegal key for: {$key}");
-							// @codeCoverageIgnoreEnd
-						}
-					}
-					break;
-				
-				default:
-					// @codeCoverageIgnoreStart
-					throw new \Exception("ILLEGAL ARGZZZZ!");
-					// @codeCoverageIgnoreEnd
-			}
-			
+			$this->_assignPropertyValue($propval, $this->properties[$key], $key, $value);
+			$property->setName($key);
 		}
-		
-		
-		if (isset($commit))
+				
+		if (isset($singleSave) && $singleSave)
 		{
-			$this->endSave((object)['commit' => $commit, 'mutation' => $mutation]);
+			$this->endSave($trans);
 		}
 		
 		return true;
@@ -387,6 +418,9 @@ class Datachore
 							break;
 						case is_string($rawValue):
 							$time = strtotime($rawValue) * (1000 * 1000);
+							break;
+						default:
+							throw new \Exception('unsupported type');
 							break;
 					}
 					

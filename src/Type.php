@@ -12,6 +12,7 @@ class Type
 	const BlobKey	= 6;
 	const Key	= 7;
 	const Blob	= 8;
+	const Set	= 9;
 	
 	public static function getTypeFromEnum($const)
 	{
@@ -32,6 +33,8 @@ class Type
 			return new Type\Key;
 		case self::Blob:
 			return new Type\Blob;
+		case self::Set:
+			return new Type\Set;
 		}
 	}
 }
