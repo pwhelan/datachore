@@ -27,6 +27,7 @@ if (extension_loaded('xdebug'))
 	}
 }
 
+
 register_shutdown_function(function() {
 	
 	global $CoverageOn;
@@ -135,6 +136,12 @@ $app->get('/coverage/(:state)', function($state) {
 	global $CoverageOn;
 	$CoverageOn = false;
 	
+	
+	if (!extension_loaded('xdebug'))
+	{
+		header('HTTP/1.0 503 Error');
+		die("XDebug is not loaded");
+	}
 	
 	$memcache = new Memcache;
 	$memcache->set('coverage_enabled',
