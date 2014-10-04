@@ -14,12 +14,13 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 	public static function setUpBeforeClass()
 	{
 		$olddir = getcwd();
+		define('INDEXYAML', realpath(__DIR__.'/../').'/index.yaml');
 		chdir(APPENGINE_BASE_SDK);
 		
 		
-		if (file_exists('index.yaml'))
+		if (file_exists(INDEXYAML))
 		{
-			unlink('index.yaml');
+			unlink(INDEXYAML);
 		}
 		
 		
@@ -71,7 +72,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 	public function testInitializeIndex()
 	{
 		// Test the output in testAutoIndexer
-		Datachore\Datachore::ActivateAutoIndexer();
+		Datachore\Datachore::ActivateAutoIndexer(INDEXYAML);
 	}
 	
 	public function testInsert()
@@ -226,7 +227,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals($test->datetime->getTimestamp(), $date->getTimestamp());
 		
 		// Datastore takes a while to commit, can we block on it?
-		sleep(1);
+		sleep(5);
 		
 		$test = model\Test::find($test->id);
 		$this->assertEquals($test->datetime, $date->getTimestamp());
@@ -244,7 +245,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		
 		$this->assertEquals($test->datetime, $date);
 		
-		sleep(1);
+		sleep(5);
 		
 		$test = model\Test::find($test->id);
 		$this->assertEquals($test->datetime, strtotime($date));
@@ -426,9 +427,9 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 	
 	public function testAutoIndexerOutput()
 	{
-		Datachore\Datachore::dumpIndex();
+		Datachore\Datachore::dumpIndex(INDEXYAML);
 		
-		$index = Symfony\Component\Yaml\Yaml::parse('index.yaml');
+		$index = Symfony\Component\Yaml\Yaml::parse(INDEXYAML);
 		
 		$this->assertArrayHasKey('indexes', $index);
 		
@@ -445,15 +446,24 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertArrayHasKey('properties', $index['indexes'][1]);
 		$this->assertArrayHasKey('name', $index['indexes'][1]['properties'][0]);
 		$this->assertArrayHasKey('direction', $index['indexes'][1]['properties'][0]);
-		$this->assertEquals('counter', $index['indexes'][1]['properties'][0]['name']);
-		$this->assertEquals('desc', $index['indexes'][1]['properties'][0]['direction']);
+		$this->assertEquals('name', $index['indexes'][1]['properties'][0]['name']);
+		$this->assertEquals('asc', $index['indexes'][1]['properties'][0]['direction']);
 	}
 	
 	public function testAutoIndexerActivate()
 	{
-		Datachore\Datachore::ActivateAutoIndexer();
+		Datachore\Datachore::ActivateAutoIndexer(INDEXYAML);
 		$tests = model\Test::where('price', '>=', 1000.00)->get();
-		Datachore\Datachore::dumpIndex();
+		Datachore\Datachore::dumpIndex(INDEXYAML);
+		
+		$index = Symfony\Component\Yaml\Yaml::parse(INDEXYAML);
+		$this->assertArrayHasKey('kind', $index['indexes'][4]);
+		$this->assertEquals('model_Test', $index['indexes'][4]['kind']);
+		$this->assertArrayHasKey('properties', $index['indexes'][4]);
+		$this->assertArrayHasKey('name', $index['indexes'][4]['properties'][0]);
+		$this->assertArrayHasKey('direction', $index['indexes'][4]['properties'][0]);
+		$this->assertEquals('price', $index['indexes'][4]['properties'][0]['name']);
+		$this->assertEquals('asc', $index['indexes'][4]['properties'][0]['direction']);
 		
 		$this->testAutoIndexerOutput();
 	}

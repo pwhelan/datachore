@@ -542,10 +542,16 @@ class Datachore
 				{
 					$noMatch = true;
 					
-					$diff = array_diff($index['properties'], $rindex);
+					if (count($index['properties']) != count($rindex))
+					{
+						continue;
+					}
+					
+					$diff = array_diff_assoc($index['properties'], $rindex);
 					if (count($diff) == 0)
 					{
 						$noMatch = false;
+						break;
 					}
 				}
 				
@@ -700,7 +706,7 @@ class Datachore
 		// @codeCoverageIgnoreEnd
 	}
 	
-	final public static function ActivateAutoIndexer()
+	final public static function ActivateAutoIndexer($indexfile)
 	{
 		self::$AutoIndex = true;
 		if (!class_exists('Symfony\Component\Yaml\Yaml'))
@@ -711,7 +717,7 @@ class Datachore
 		}
 		
 		
-		if (file_exists('index.yaml'))
+		if (file_exists($indexfile))
 		{
 			self::$Index = array_map(
 				function ($indexes) {
@@ -738,7 +744,7 @@ class Datachore
 					
 					return $ret;
 				},
-				\Symfony\Component\Yaml\Yaml::parse('index.yaml')
+				\Symfony\Component\Yaml\Yaml::parse($indexfile)
 			);
 		}
 		else
@@ -747,7 +753,7 @@ class Datachore
 		}
 	}
 	
-	final public static function dumpIndex()
+	final public static function dumpIndex($indexfile = 'index.yaml')
 	{
 		if (self::$IndexChanged)
 		{
@@ -780,11 +786,11 @@ class Datachore
 			}
 			
 			file_put_contents(
-				'index.yaml',
+				$indexfile,
 				\Symfony\Component\Yaml\Yaml::dump(
-					(file_exists('index.yaml') ?
+					(file_exists($indexfile) ?
 						array_merge(
-							\Symfony\Component\Yaml\Yaml::parse('index.yaml'),
+							\Symfony\Component\Yaml\Yaml::parse($indexfile),
 							['indexes' => $indexes]
 						) :
 						['indexes' => $indexes]),
