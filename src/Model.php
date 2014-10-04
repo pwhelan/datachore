@@ -237,10 +237,12 @@ class Model extends Datachore
 			}
 		}
 		
+		// @codeCoverageIgnoreStart
 		if (method_exists($this, 'define'))
 		{
 			$this->define();
 		}
+		// @codeCoverageIgnoreEnd
 	}
 	
 }

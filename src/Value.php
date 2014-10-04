@@ -141,8 +141,10 @@ class Value
 				return "[". implode(',', $values);
 			*/
 			
+			// @codeCoverageIgnoreStart
 			default:
-				return "";
+				throw new \Exception("Unknow Type");
+			// @codeCoverageIgnoreEnd
 		}
 	}
 }

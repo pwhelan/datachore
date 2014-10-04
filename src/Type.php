@@ -28,7 +28,9 @@ class Type
 		case self::Timestamp:
 			return new Type\Timestamp;
 		case self::BlobKey:
+			// @codeCoverageIgnoreStart
 			return new Type\BlobKey;
+			// @codeCoverageIgnoreEnd
 		case self::Key:
 			return new Type\Key;
 		case self::Blob:
