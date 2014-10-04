@@ -13,7 +13,16 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 	
 	public static function setUpBeforeClass()
 	{
+		$olddir = getcwd();
 		chdir(APPENGINE_BASE_SDK);
+		
+		
+		if (file_exists('index.yaml'))
+		{
+			unlink('index.yaml');
+		}
+		
+		
 		require_once 'google/appengine/runtime/autoloader.php';
 		
 		
@@ -51,11 +60,18 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$datastore = new Datachore\Datastore\GoogleRemoteApi([
 			'datasetId'	=> $settings->application_id
 		]);
+		
 	}
 	
 	public static function tearDownAfterClass()
 	{
 		chdir(__DIR__.'/../');
+	}
+	
+	public function testInitializeIndex()
+	{
+		// Test the output in testAutoIndexer
+		Datachore\Datachore::ActivateAutoIndexer();
 	}
 	
 	public function testInsert()
@@ -401,5 +417,44 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 			$value = new Datachore\Value($gvalue);
 			$this->assertEquals($type['string'], (string)$value, "__toString failed for {$type['name']}");
 		}
+	}
+	
+	public function testAll()
+	{
+		$tests = model\Test::all();
+	}
+	
+	public function testAutoIndexerOutput()
+	{
+		Datachore\Datachore::dumpIndex();
+		
+		$index = Symfony\Component\Yaml\Yaml::parse('index.yaml');
+		
+		$this->assertArrayHasKey('indexes', $index);
+		
+		$this->assertArrayHasKey('kind', $index['indexes'][0]);
+		$this->assertEquals('model_Test', $index['indexes'][0]['kind']);
+		$this->assertArrayHasKey('properties', $index['indexes'][0]);
+		$this->assertArrayHasKey('name', $index['indexes'][0]['properties'][0]);
+		$this->assertArrayHasKey('direction', $index['indexes'][0]['properties'][0]);
+		$this->assertEquals('counter', $index['indexes'][0]['properties'][0]['name']);
+		$this->assertEquals('asc', $index['indexes'][0]['properties'][0]['direction']);
+		
+		$this->assertArrayHasKey('kind', $index['indexes'][1]);
+		$this->assertEquals('model_Test', $index['indexes'][1]['kind']);
+		$this->assertArrayHasKey('properties', $index['indexes'][1]);
+		$this->assertArrayHasKey('name', $index['indexes'][1]['properties'][0]);
+		$this->assertArrayHasKey('direction', $index['indexes'][1]['properties'][0]);
+		$this->assertEquals('counter', $index['indexes'][1]['properties'][0]['name']);
+		$this->assertEquals('desc', $index['indexes'][1]['properties'][0]['direction']);
+	}
+	
+	public function testAutoIndexerActivate()
+	{
+		Datachore\Datachore::ActivateAutoIndexer();
+		$tests = model\Test::where('price', '>=', 1000.00)->get();
+		Datachore\Datachore::dumpIndex();
+		
+		$this->testAutoIndexerOutput();
 	}
 }

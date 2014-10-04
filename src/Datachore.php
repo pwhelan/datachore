@@ -165,7 +165,9 @@ class Datachore
 						$time = strtotime($value) * (1000 * 1000);
 						break;
 					default:
+						// @codeCoverageIgnoreStart
 						throw new \Exception('Unsupported time');
+						// @codeCoverageIgnoreEnd
 				}
 				
 				$propval->setTimestampMicrosecondsValue($time);
@@ -176,7 +178,9 @@ class Datachore
 				break;
 			
 			case $property instanceof Type\BlobKey:
+				// @codeCoverageIgnoreStart
 				$propval->setBlobKeyValue($value);
+				// @codeCoverageIgnoreEnd
 				break;
 			
 			case $property instanceof Type\Key:
@@ -235,7 +239,9 @@ class Datachore
 				break;
 			
 			default:
+				// @codeCoverageIgnoreStart
 				throw new \Exception("ILLEGAL ARGZZZZ!");
+				// @codeCoverageIgnoreEnd
 		}
 		
 	}
@@ -331,11 +337,13 @@ class Datachore
 			}
 			else
 			{
+				// @codeCoverageIgnoreStart
 				if ($id instanceof Value)
 				{
 					$id = $id->rawValue();
 				}
 				$path->setId($id->getPathElement(0)->getId());
+				// @codeCoverageIgnoreEnd
 			}
 		}
 		
@@ -471,8 +479,10 @@ class Datachore
 		{
 			$index = new \stdClass;
 			
-			$index->kind = $kind->getName();
-			$index->properties = [];
+			$index = [
+				'kind'		=> $kind->getName(),
+				'properties'	=> []
+			];
 			
 			if ($this->_query->hasFilter())
 			{
@@ -482,47 +492,57 @@ class Datachore
 					$filters = $filters->getCompositeFilter();
 					//print "<pre>";
 					
-					for ($i = 0; $i < 256; $i++)
+					foreach($filters->getFilterList() as $filter)
 					{
-						try
-						{
-							$filter = $filters->getFilter($i);
-						}
-						catch (\OutOfRangeException $e)
-						{
-							break;
-						}
-						
 						$propFilter = $filter->getPropertyFilter();
 						switch ($propFilter->getOperator())
 						{
-							case 5:
+							case \google\appengine\datastore\v4\PropertyFilter\Operator::LESS_THAN:
+							case \google\appengine\datastore\v4\PropertyFilter\Operator::LESS_THAN_OR_EQUAL:
+								$direction = 'asc';
+								break;
+							case \google\appengine\datastore\v4\PropertyFilter\Operator::GREATER_THAN:
+							case \google\appengine\datastore\v4\PropertyFilter\Operator::GREATER_THAN_OR_EQUAL:
+								$direction = 'desc';
+								break;
+							case \google\appengine\datastore\v4\PropertyFilter\Operator::EQUAL:
+							case \google\appengine\datastore\v4\PropertyFilter\Operator::HAS_ANCESTOR:
 							default:
 								$direction = null;
 								break;
 						}
 						
-						$index->properties[$propFilter->getProperty()->getName()] = $direction;
+						$index['properties'][$propFilter->getProperty()->getName()] = $direction;
 					}
 				}
 			}
 			
+			if ($this->_query->getOrderSize() >= 1)
+			{
+				foreach($this->_query->getOrderList() as $order)
+				{
+					$property = $order->getProperty();
+					$index['properties'][$property->getName()] = $order->getDirection();
+				}
+			}
 			
-			if (count($index->properties) == 0 || (count($index->properties) == 1 && array_key_exists('__key__', $index->properties)))
+			
+			if (count($index['properties']) == 0 || (count($index['properties']) == 1 && array_key_exists('__key__', $index['properties'])))
 			{
 				// print DO NOT INDEX JUST THE KEY
 			}
-			else if (!isset(self::$Index['indexes'][$index->kind]))
+			else if (!isset(self::$Index['indexes'][$index['kind']]))
 			{
-				self::$Index['indexes'][$index->kind] = [(array)$index->properties];
+				self::$Index['indexes'][$index['kind']] = [$index['properties']];
 				self::$IndexChanged = true;
 			}
 			else
 			{
-				foreach (self::$Index['indexes'][$index->kind] as $rindex)
+				foreach (self::$Index['indexes'][$index['kind']] as $rindex)
 				{
 					$noMatch = true;
-					$diff = array_diff((array)$index, $rindex);
+					
+					$diff = array_diff($index['properties'], $rindex);
 					if (count($diff) == 0)
 					{
 						$noMatch = false;
@@ -531,7 +551,8 @@ class Datachore
 				
 				if ($noMatch)
 				{
-					self::$Index['indexes'][$index->kind][] = (array)$index->properties;
+					self::$Index['indexes'][$index['kind']][] = $index['properties'];
+					self::$IndexChanged = true;
 				}
 			}
 		}
@@ -659,7 +680,9 @@ class Datachore
 			}
 		}
 		
+		// @codeCoverageIgnoreStart
 		throw new \Exception("No such method: {$func}");
+		// @codeCoverageIgnoreEnd
 	}
 	
 	public static function __callStatic($func, $args)
@@ -672,7 +695,9 @@ class Datachore
 			return call_user_func_array([$instance, $func], $args);
 		}
 		
+		// @codeCoverageIgnoreStart
 		throw new \Exception("No such static method");
+		// @codeCoverageIgnoreEnd
 	}
 	
 	final public static function ActivateAutoIndexer()
@@ -680,37 +705,46 @@ class Datachore
 		self::$AutoIndex = true;
 		if (!class_exists('Symfony\Component\Yaml\Yaml'))
 		{
+			// @codeCoverageIgnoreStart
 			throw new \Exception('Unable to load YAML Parser for Index file.');
+			// @codeCoverageIgnoreEnd
 		}
 		
 		
-		self::$Index = array_map(
-			function ($indexes) {
-				
-				$ret = [];
-				
-				
-				foreach ($indexes as $index)
-				{
-					if (!isset($ret[$index['kind']]))
+		if (file_exists('index.yaml'))
+		{
+			self::$Index = array_map(
+				function ($indexes) {
+					
+					$ret = [];
+					
+					
+					foreach ($indexes as $index)
 					{
-						$ret[$index['kind']] = [];
+						if (!isset($ret[$index['kind']]))
+						{
+							$ret[$index['kind']] = [];
+						}
+						
+						$properties = [];
+						foreach ($index['properties'] as $property)
+						{
+							$properties[$property['name']] = isset($property['direction']) ?
+								$property['direction'] : null;
+						}
+						
+						$ret[$index['kind']][] = $properties;
 					}
 					
-					$properties = [];
-					foreach ($index['properties'] as $property)
-					{
-						$properties[$property['name']] = isset($property['direction']) ?
-							$property['direction'] : null;
-					}
-					
-					$ret[$index['kind']][] = $properties;
-				}
-				
-				return $ret;
-			},
-			\Symfony\Component\Yaml\Yaml::parse('index.yaml')
-		);
+					return $ret;
+				},
+				\Symfony\Component\Yaml\Yaml::parse('index.yaml')
+			);
+		}
+		else
+		{
+			self::$Index = ['indexes' => []];
+		}
 	}
 	
 	final public static function dumpIndex()
@@ -727,7 +761,7 @@ class Datachore
 				{
 					$properties = [];
 					
-					foreach ($propidx as $name => $idx)
+					foreach ($propidx as $name => $dir)
 					{
 						$prop = ['name' => $name];
 						if ($dir)
@@ -748,10 +782,12 @@ class Datachore
 			file_put_contents(
 				'index.yaml',
 				\Symfony\Component\Yaml\Yaml::dump(
-					array_merge(
-						\Symfony\Component\Yaml\Yaml::parse('index.yaml'),
-						['indexes' => $indexes]
-					),
+					(file_exists('index.yaml') ?
+						array_merge(
+							\Symfony\Component\Yaml\Yaml::parse('index.yaml'),
+							['indexes' => $indexes]
+						) :
+						['indexes' => $indexes]),
 					16
 				)
 			);
