@@ -6,6 +6,9 @@
  */
 namespace Datachore;
 
+use Symfony\Component\Yaml\Yaml;
+
+
 class Datachore
 {
 	private $_datasetId = null;
@@ -15,6 +18,10 @@ class Datachore
 	protected $_runQuery;
 	protected $_query;
 	protected $_filter;
+	
+	private static $AutoIndex = false;
+	private static $Index = null;
+	private static $IndexChanged = false;
 	
 	
 	private function _clear()
@@ -460,6 +467,75 @@ class Datachore
 		$partition_id->setDatasetId($this->datasetId());
 		
 		$results = $this->datastore()->runQuery($this->datasetId(), $this->_runQuery);
+		if (self::$AutoIndex)
+		{
+			$index = new \stdClass;
+			
+			$index->kind = $kind->getName();
+			$index->properties = [];
+			
+			if ($this->_query->hasFilter())
+			{
+				$filters = $this->_query->getFilter();
+				if ($filters)
+				{
+					$filters = $filters->getCompositeFilter();
+					//print "<pre>";
+					
+					for ($i = 0; $i < 256; $i++)
+					{
+						try
+						{
+							$filter = $filters->getFilter($i);
+						}
+						catch (\OutOfRangeException $e)
+						{
+							break;
+						}
+						
+						$propFilter = $filter->getPropertyFilter();
+						switch ($propFilter->getOperator())
+						{
+							case 5:
+							default:
+								$direction = null;
+								break;
+						}
+						
+						$index->properties[$propFilter->getProperty()->getName()] = $direction;
+					}
+				}
+			}
+			
+			
+			if (count($index->properties) == 0 || (count($index->properties) == 1 && array_key_exists('__key__', $index->properties)))
+			{
+				// print DO NOT INDEX JUST THE KEY
+			}
+			else if (!isset(self::$Index['indexes'][$index->kind]))
+			{
+				self::$Index['indexes'][$index->kind] = [(array)$index->properties];
+				self::$IndexChanged = true;
+			}
+			else
+			{
+				foreach (self::$Index['indexes'][$index->kind] as $rindex)
+				{
+					$noMatch = true;
+					$diff = array_diff((array)$index, $rindex);
+					if (count($diff) == 0)
+					{
+						$noMatch = false;
+					}
+				}
+				
+				if ($noMatch)
+				{
+					self::$Index['indexes'][$index->kind][] = (array)$index->properties;
+				}
+			}
+		}
+		
 		$this->_clear();
 		
 		
@@ -597,5 +673,90 @@ class Datachore
 		}
 		
 		throw new \Exception("No such static method");
+	}
+	
+	final public static function ActivateAutoIndexer()
+	{
+		self::$AutoIndex = true;
+		if (!class_exists('Symfony\Component\Yaml\Yaml'))
+		{
+			throw new \Exception('Unable to load YAML Parser for Index file.');
+		}
+		
+		
+		self::$Index = array_map(
+			function ($indexes) {
+				
+				$ret = [];
+				
+				
+				foreach ($indexes as $index)
+				{
+					if (!isset($ret[$index['kind']]))
+					{
+						$ret[$index['kind']] = [];
+					}
+					
+					$properties = [];
+					foreach ($index['properties'] as $property)
+					{
+						$properties[$property['name']] = isset($property['direction']) ?
+							$property['direction'] : null;
+					}
+					
+					$ret[$index['kind']][] = $properties;
+				}
+				
+				return $ret;
+			},
+			\Symfony\Component\Yaml\Yaml::parse('index.yaml')
+		);
+	}
+	
+	final public static function dumpIndex()
+	{
+		if (self::$IndexChanged)
+		{
+			$indexes = [];
+			
+			
+			foreach (self::$Index['indexes'] as $kind => $propidxs)
+			{
+				
+				foreach ($propidxs as $propidx)
+				{
+					$properties = [];
+					
+					foreach ($propidx as $name => $idx)
+					{
+						$prop = ['name' => $name];
+						if ($dir)
+						{
+							$prop['direction'] = $dir;
+						}
+						
+						$properties[] = $prop;
+					}
+					
+					$indexes[] = [
+						'kind'		=> $kind,
+						'properties'	=> $properties
+					];
+				}
+			}
+			
+			file_put_contents(
+				'index.yaml',
+				\Symfony\Component\Yaml\Yaml::dump(
+					array_merge(
+						\Symfony\Component\Yaml\Yaml::parse('index.yaml'),
+						['indexes' => $indexes]
+					),
+					16
+				)
+			);
+			
+			self::$IndexChanged = false;
+		}
 	}
 }
