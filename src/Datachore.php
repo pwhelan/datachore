@@ -653,10 +653,10 @@ class Datachore
 						break;
 					}
 				}
+				
+				$this->_where($property, $chain, $operator, $value);
+				return $this;
 			}
-			
-			$this->_where($property, $chain, $operator, $value);
-			return $this;
 		}
 		
 		throw new \Exception("No such method: {$func}");
