@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/model/Test.php';
 require_once __DIR__.'/model/Reference.php';
+require_once __DIR__.'/model/Testcase.php';
 
 define('APPENGINE_BASE_SDK', __DIR__.'/../google_appengine/php/sdk/');
 
@@ -347,6 +348,36 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		}
 	}
 	
+	public function testQueryMultipleConditions()
+	{
+		$tests = model\Test::where(function($q) {
+				$q->where('price', '<=', 13.37);
+				$q->where('is_deleted', '==', false);
+			})
+			->get();
+		$this->assertGreaterThanOrEqual(1, count($tests));
+		
+		foreach ($tests as $test)
+		{
+			$this->assertEquals(false, $test->is_deleted);
+			$this->assertLessThanOrEqual(13.37, $test->price);
+		}
+		
+		
+		$tests = model\Test::where(function($q) {
+				$q->where('price', '<=', 13.37);
+				$q->where('is_deleted', '==', true);
+			})
+			->get();
+		$this->assertGreaterThanOrEqual(1, count($tests));
+		
+		foreach ($tests as $test)
+		{
+			$this->assertEquals(true, $test->is_deleted);
+			$this->assertLessThanOrEqual(13.37, $test->price);
+		}
+	}
+	
 	public function testQueryByBlob()
 	{
 		$tests = model\Test::where('description', '==', "Not as Amicable");
@@ -466,5 +497,66 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals('asc', $index['indexes'][4]['properties'][0]['direction']);
 		
 		$this->testAutoIndexerOutput();
+	}
+	
+	public function testOrderByDesc()
+	{
+		$tests = Model\Test::where('price', '<=', 9000.000)
+			->orderBy('price', 'desc')
+			->get();
+		
+		for ($price = $tests[0]->price, $i = 1; $i < count($tests); $i++)
+		{
+			$this->assertLessThanOrEqual($price, $tests[$i]->price);
+			$price = $tests[$i]->price;
+		}
+	}
+	
+	public function testPagination()
+	{
+		$ids = [];
+		
+		
+		for ($i = 0; $i < 256; $i+= 1)
+		{
+			$tests = Model\Test::where('price', '<=', 9000.000)
+				->orderBy('price', 'desc')
+				->offset($i)
+				->limit(1)
+				->get();
+			
+			if (count($tests) <= 0)
+			{
+				break;
+			}
+			
+			foreach ($tests as $test)
+			{
+				$this->assertFalse(in_array($test->id, $ids));
+				$ids[] = $test->id;
+			}
+		}
+	}
+	
+	public function testNotSetNull()
+	{
+		$test = new model\Test;
+		$this->assertNull($test->name);
+	}
+	
+	public function testSets()
+	{
+		$case = new model\Testcase;
+		$tests = model\Test::all();
+		
+		$case->tests = $tests;
+		$this->assertEquals($tests, $case->tests);
+		
+		$case->save();
+		sleep(5);
+		
+		$savedcase = model\Testcase::find($case->id);
+		//print_r($savedcase->tests);
+		$this->assertEquals($case->tests, $savedcase->tests->asArray());
 	}
 }
