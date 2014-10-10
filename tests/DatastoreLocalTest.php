@@ -559,6 +559,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$case = new model\Testcase;
 		$tests = model\Test::all();
 		
+		$this->assertInstanceOf('ArrayObject', $case->tests);
 		$case->tests = $tests;
 		$this->assertEquals($tests, $case->tests);
 		
