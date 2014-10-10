@@ -309,6 +309,14 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		}
 	}
 	
+	public function testQueryByReference()
+	{
+		$ref = model\Reference::where('name', '==', "A friend indeed")->first();
+		$test = model\Test::where('ref', '==', $ref)->first();
+		
+		$this->assertEquals($ref->id, $test->ref->id);
+	}
+	
 	public function testQueryByDateTime()
 	{
 		$tests = model\Test::where('datetime', '==', "1983-03-30")->get();
