@@ -107,20 +107,26 @@ class Model extends Datachore
 				return $this->__key = clone $val;
 			}
 		}
-		else if ($val instanceof \google\appengine\datastore\v4\Key)
+		else if ($this->properties[$key] instanceof Type\Key)
 		{
-			return $this->updates[$key] = $val;
+			if ($val instanceof \google\appengine\datastore\v4\Key)
+			{
+				return $this->updates[$key] = $val;
+			}
+			else if ($val instanceof Model)
+			{
+				$this->updates[$key] = $val->key;
+				$this->foreign[$key] = $val;
+				
+				return $val;
+			}
 		}
-		else if ($this->properties[$key] instanceof Type\Set && is_array($val))
+		else if ($this->properties[$key] instanceof Type\Set)
 		{
-			return $this->updates[$key] = new \ArrayObject($val);
-		}
-		else if ($val instanceof Model)
-		{
-			$this->updates[$key] = $val->key;
-			$this->foreign[$key] = $val;
-			
-			return $val;
+			if (is_array($val))
+			{
+				return $this->updates[$key] = new \ArrayObject($val);
+			}
 		}
 		
 		if (!isset($this->properties[$key]))
