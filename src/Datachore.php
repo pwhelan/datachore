@@ -506,7 +506,8 @@ class Datachore
 								$direction = 'desc';
 								break;
 							case \google\appengine\datastore\v4\PropertyFilter\Operator::EQUAL:
-							case \google\appengine\datastore\v4\PropertyFilter\Operator::HAS_ANCESTOR:
+							// TODO: support for ancestor index.
+							// case \google\appengine\datastore\v4\PropertyFilter\Operator::HAS_ANCESTOR:
 							default:
 								$direction = null;
 								break;
@@ -517,17 +518,21 @@ class Datachore
 				}
 			}
 			
+			
 			if ($this->_query->getOrderSize() >= 1)
 			{
 				foreach($this->_query->getOrderList() as $order)
 				{
 					$property = $order->getProperty();
-					$index['properties'][$property->getName()] = $order->getDirection();
+					$index['properties'][$property->getName()] = 
+						$order->getDirection() == 
+							\google\appengine\datastore\v4\PropertyOrder\Direction::ASCENDING ?
+							'asc' : 'desc';
 				}
 			}
 			
 			
-			if (count($index['properties']) == 0 || (count($index['properties']) == 1 && array_key_exists('__key__', $index['properties'])))
+			if (count($index['properties']) == 0)
 			{
 				// print DO NOT INDEX JUST THE KEY
 			}
@@ -706,7 +711,7 @@ class Datachore
 		// @codeCoverageIgnoreEnd
 	}
 	
-	final public static function ActivateAutoIndexer($indexfile)
+	final public static function ActivateAutoIndexer($indexfile = 'index.yaml')
 	{
 		self::$AutoIndex = true;
 		if (!class_exists('Symfony\Component\Yaml\Yaml'))
@@ -759,6 +764,8 @@ class Datachore
 		{
 			$indexes = [];
 			
+			
+			print_r(self::$Index['indexes']);
 			
 			foreach (self::$Index['indexes'] as $kind => $propidxs)
 			{
