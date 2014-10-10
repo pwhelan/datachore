@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+0.0.3
+-----
+
+  * Support for Pagination (Limit/Offset) and Ordering (OrderBy).
+  * Support for Sets.
+  * Auto Indexer.
+
 0.0.2
 -----
 
