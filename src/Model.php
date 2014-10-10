@@ -55,10 +55,12 @@ class Model extends Datachore
 				$fkey = $this->values[$key]->rawValue();
 			}
 			
+			// @codeCoverageIgnoreStart
 			if (!isset($fkey) || !$fkey instanceof \google\appengine\datastore\v4\Key)
 			{
 				return null;
 			}
+			// @codeCoverageIgnoreEnd
 			
 			if (!isset($this->foreign[$key]))
 			{
