@@ -164,8 +164,9 @@ class Datachore
 					case is_string($value):
 						$time = strtotime($value) * (1000 * 1000);
 						break;
+						
+					// @codeCoverageIgnoreStart
 					default:
-						// @codeCoverageIgnoreStart
 						throw new \Exception('Unsupported time');
 						// @codeCoverageIgnoreEnd
 				}
@@ -177,8 +178,8 @@ class Datachore
 				$propval->setBlobValue($value);
 				break;
 			
+			// @codeCoverageIgnoreStart
 			case $property instanceof Type\BlobKey:
-				// @codeCoverageIgnoreStart
 				$propval->setBlobKeyValue($value);
 				// @codeCoverageIgnoreEnd
 				break;
@@ -238,8 +239,8 @@ class Datachore
 				}
 				break;
 			
+			// @codeCoverageIgnoreStart
 			default:
-				// @codeCoverageIgnoreStart
 				throw new \Exception("ILLEGAL ARGZZZZ!");
 				// @codeCoverageIgnoreEnd
 		}
