@@ -109,13 +109,18 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$now = new DateTime("1983-03-30");
 		
 		$test = new model\Test;
-		
 		$test->name = "Foobar";
 		$test->counter = self::$counter++;
 		$test->price = 13.37;
 		$test->description = "Friendly little bugger";
 		$test->datetime = $now;
 		$test->is_deleted = false;
+		
+		$ref = new model\Reference;
+		$ref->name = "Barfoo";
+		$ref->save();
+		
+		$test->ref = $ref;
 		
 		
 		$array = $test->toArray();
@@ -125,12 +130,33 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(13.37, $array['price']);
 		$this->assertEquals("Friendly little bugger", $array['description']);
 		$this->assertEquals($now->getTimestamp(), $array['datetime']->getTimestamp());
+		$this->assertArrayHasKey('ref', $array);
+		$this->assertEquals($ref->id, $array['ref']['id']);
 		
 		
 		$test->datetime = $test->datetime->getTimestamp();
 		$array = $test->toArray();
 		
 		$this->assertEquals($now->getTimestamp(), $test->datetime);
+		
+		$test->save();
+		
+		
+		$case = new model\Testcase;
+		$case->tests[] = $test;
+		$case->results = [ 0 ];
+		$case->save();
+		
+		$array = $case->toArray();
+		$this->assertArrayHasKey('id', $array);
+		$this->assertEquals($case->id, $array['id']);
+		$this->assertArrayHasKey('tests', $array);
+		$this->assertArrayHasKey('id', $array['tests'][0]);
+		$this->assertArrayHasKey('kind', $array['tests'][0]);
+		$this->assertEquals($test->id, $array['tests'][0]['id']);
+		$this->assertEquals('model_Test', $array['tests'][0]['kind']);
+		$this->assertArrayHasKey('results', $array);
+		$this->assertEquals(0, $array['results'][0]);
 	}
 	
 	public function testInsertWithReference()
@@ -585,4 +611,5 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 			)
 		);
 	}
+	
 }

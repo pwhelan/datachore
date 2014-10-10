@@ -176,11 +176,30 @@ class Model extends Datachore
 			{
 				if (isset($this->updates[$key]))
 				{
-					$ret[$key] = (array)$this->updates[$key];
+					$ret[$key] = array_map(
+						function($ret) use ($prop) {
+							if ($prop->type() instanceof Type\Key)
+							{
+								return [
+									'id'	=> $ret->id,
+									'kind'	=> $ret->key->getPathElement(0)->getKind()
+								];
+							}
+							else
+							{
+								return $ret;
+							}
+						},
+						(array)$this->updates[$key]
+					);
+				}
+				else if (isset($this->values[$key]))
+				{
+					$ret[$key] = (array)$this->values[$key]->rawValue();
 				}
 				else
 				{
-					//$ret[$key] = (array)$this->values[$key]->rawValue();
+					$ret[$key] = [];
 				}
 			}
 			else if (isset($this->updates[$key]) && !isset($this->foreign[$key]))
@@ -189,6 +208,13 @@ class Model extends Datachore
 			}
 			else if (isset($this->foreign[$key]))
 			{
+				// @codeCoverageIgnoreStart
+				if (!$this->foreign[$key]->key)
+				{
+					throw new \Exception('Unable to serialize unsaved references.');
+				}
+				// @codeCoverageIgnoreEnd
+				
 				$ret[$key] = [
 					'kind'	=> $this->foreign[$key]->key->getPathElement(0)->getKind(),
 					'id'	=> $this->foreign[$key]->key->getPathElement(0)->getId()
@@ -196,25 +222,22 @@ class Model extends Datachore
 			}
 			else if (isset($this->values[$key]))
 			{
-				if (isset($this->values[$key]))
+				$val = $this->values[$key]->rawValue();
+				if ($val instanceof \google\appengine\datastore\v4\Key)
 				{
-					$val = $this->values[$key]->rawValue();
-					if ($val instanceof \google\appengine\datastore\v4\Key)
-					{
-						$ret[$key] = [
-							'kind'	=> $val->getPathElement(0)->getKind(),
-							'id'	=> $val->getPathElement(0)->getId()
-						];
-					}
-					// Interim fix for timestamp values
-					else if ($this->properties[$key] instanceof Type\Timestamp)
-					{
-						$ret[$key] = $val / (1000 * 1000);
-					}
-					else
-					{
-						$ret[$key] = $val;
-					}
+					$ret[$key] = [
+						'kind'	=> $val->getPathElement(0)->getKind(),
+						'id'	=> $val->getPathElement(0)->getId()
+					];
+				}
+				// Interim fix for timestamp values
+				else if ($this->properties[$key] instanceof Type\Timestamp)
+				{
+					$ret[$key] = $val / (1000 * 1000);
+				}
+				else
+				{
+					$ret[$key] = $val;
 				}
 			}
 		}
