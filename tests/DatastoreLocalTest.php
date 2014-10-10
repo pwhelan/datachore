@@ -469,16 +469,24 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertArrayHasKey('properties', $index['indexes'][0]);
 		$this->assertArrayHasKey('name', $index['indexes'][0]['properties'][0]);
 		$this->assertArrayHasKey('direction', $index['indexes'][0]['properties'][0]);
-		$this->assertEquals('counter', $index['indexes'][0]['properties'][0]['name']);
+		$this->assertEquals('price', $index['indexes'][0]['properties'][0]['name']);
 		$this->assertEquals('asc', $index['indexes'][0]['properties'][0]['direction']);
+		$this->assertArrayHasKey('name', $index['indexes'][0]['properties'][1]);
+		$this->assertEquals('is_deleted', $index['indexes'][0]['properties'][1]['name']);
+	}
+	
+	public function testOrderByDesc()
+	{
+		$tests = Model\Test::where('price', '<=', 9000.000)
+			->orderBy('price', 'desc')
+			->orderBy('counter', 'desc')
+			->get();
 		
-		$this->assertArrayHasKey('kind', $index['indexes'][1]);
-		$this->assertEquals('model_Test', $index['indexes'][1]['kind']);
-		$this->assertArrayHasKey('properties', $index['indexes'][1]);
-		$this->assertArrayHasKey('name', $index['indexes'][1]['properties'][0]);
-		$this->assertArrayHasKey('direction', $index['indexes'][1]['properties'][0]);
-		$this->assertEquals('name', $index['indexes'][1]['properties'][0]['name']);
-		$this->assertEquals('asc', $index['indexes'][1]['properties'][0]['direction']);
+		for ($price = $tests[0]->price, $i = 1; $i < count($tests); $i++)
+		{
+			$this->assertLessThanOrEqual($price, $tests[$i]->price);
+			$price = $tests[$i]->price;
+		}
 	}
 	
 	public function testAutoIndexerActivate()
