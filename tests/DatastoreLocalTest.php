@@ -492,32 +492,26 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 	public function testAutoIndexerActivate()
 	{
 		Datachore\Datachore::ActivateAutoIndexer(INDEXYAML);
-		$tests = model\Test::where('price', '>=', 1000.00)->get();
+		$tests = model\Test::where('price', '>=', 1000.00)
+				->orderBy('price', 'desc')
+				->orderBy('counter', 'desc')
+			->get();
 		Datachore\Datachore::dumpIndex(INDEXYAML);
 		
 		$index = Symfony\Component\Yaml\Yaml::parse(INDEXYAML);
-		$this->assertArrayHasKey('kind', $index['indexes'][4]);
-		$this->assertEquals('model_Test', $index['indexes'][4]['kind']);
-		$this->assertArrayHasKey('properties', $index['indexes'][4]);
-		$this->assertArrayHasKey('name', $index['indexes'][4]['properties'][0]);
-		$this->assertArrayHasKey('direction', $index['indexes'][4]['properties'][0]);
-		$this->assertEquals('price', $index['indexes'][4]['properties'][0]['name']);
-		$this->assertEquals('asc', $index['indexes'][4]['properties'][0]['direction']);
+		$this->assertArrayHasKey('kind', $index['indexes'][1]);
+		$this->assertEquals('model_Test', $index['indexes'][1]['kind']);
+		$this->assertArrayHasKey('properties', $index['indexes'][1]);
+		$this->assertArrayHasKey('name', $index['indexes'][1]['properties'][0]);
+		$this->assertArrayHasKey('direction', $index['indexes'][1]['properties'][0]);
+		$this->assertEquals('price', $index['indexes'][1]['properties'][0]['name']);
+		$this->assertEquals('desc', $index['indexes'][1]['properties'][0]['direction']);
+		$this->assertArrayHasKey('name', $index['indexes'][1]['properties'][1]);
+		$this->assertArrayHasKey('direction', $index['indexes'][1]['properties'][1]);
+		$this->assertEquals('counter', $index['indexes'][1]['properties'][1]['name']);
+		$this->assertEquals('desc', $index['indexes'][1]['properties'][1]['direction']);
 		
 		$this->testAutoIndexerOutput();
-	}
-	
-	public function testOrderByDesc()
-	{
-		$tests = Model\Test::where('price', '<=', 9000.000)
-			->orderBy('price', 'desc')
-			->get();
-		
-		for ($price = $tests[0]->price, $i = 1; $i < count($tests); $i++)
-		{
-			$this->assertLessThanOrEqual($price, $tests[$i]->price);
-			$price = $tests[$i]->price;
-		}
 	}
 	
 	public function testPagination()
@@ -564,7 +558,22 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		sleep(5);
 		
 		$savedcase = model\Testcase::find($case->id);
-		//print_r($savedcase->tests);
-		$this->assertEquals($case->tests, $savedcase->tests->asArray());
+		
+		// TODO: get Datachore to use collections internally for 
+		// retrieved sets. Look into a better method of diff'ing
+		// collections.
+		$this->assertEquals(
+			$case->tests
+				->map(function ($test) {
+					return $test->id;
+				})
+				->toArray(),
+			array_map(
+				function($test) {
+					return $test->getKeyValue()->getPathElement(0)->getId();
+				},
+				$savedcase->tests
+			)
+		);
 	}
 }
