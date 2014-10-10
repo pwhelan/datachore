@@ -47,6 +47,25 @@ require 'vendor/autoload.php';
 Getting Started
 ---------------
 
+Datachore uses an API similar to Python on Google App Engine where there is a
+class representing an Entity Kind. This class has properties that define their
+type.
+
+The features Datachore supports so far is:
+
+  * Types:
+    * Boolean
+    * Integer
+    * Double
+    * String
+    * List (called sets internally)
+    * Key
+    * Timestamp
+
+Sets work but the API still is not finished. Sets are saved as collections but
+are retrieved simply as an array. In the future Datachore, in the case of sets
+of keys, will use lazy loading to fetch the actual entities they refer to.
+
 ### Creating model files
 
 To create a new Entity kind you need to back it with a class extended from
@@ -155,3 +174,11 @@ $robin = model\Test::where('name', '==', 'Robin')->first();
 $batman = model\Test::where('ref', '==', $robin)->first();
 
 ```
+
+### Using the AutoIndexer
+
+To use the AutoIndexer it is simply a matter of invoking
+Datachore::ActivateAutoIndexer() then invoking Datachore::dumpIndex() once
+any quieres to be indexed have been called. This is especially important for
+queries using orderBy since the live environment will throw an error if there is
+no corresponding index for queries with ordering.
