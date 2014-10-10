@@ -207,6 +207,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 			}
 		}
 		
+		sleep(10);
 		foreach ($tests as $test)
 		{
 			$t2 = json_decode(
