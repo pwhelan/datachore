@@ -474,6 +474,7 @@ class Datachore
 		$partition_id = $this->_runQuery->mutablePartitionId();
 		$partition_id->setDatasetId($this->datasetId());
 		
+		
 		$results = $this->datastore()->runQuery($this->datasetId(), $this->_runQuery);
 		if (self::$AutoIndex)
 		{
@@ -532,7 +533,7 @@ class Datachore
 			}
 			
 			
-			if (count($index['properties']) == 0)
+			if (count($index['properties']) <= 1)
 			{
 				// print DO NOT INDEX JUST THE KEY
 			}
@@ -764,8 +765,6 @@ class Datachore
 		{
 			$indexes = [];
 			
-			
-			print_r(self::$Index['indexes']);
 			
 			foreach (self::$Index['indexes'] as $kind => $propidxs)
 			{
