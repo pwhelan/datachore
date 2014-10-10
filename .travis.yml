@@ -1,7 +1,7 @@
 language: php
 
 env:
-    - APPENGINE_VERSION=1.9.12
+    - APPENGINE_VERSION=1.9.13
 
 php:
     - 5.4
