@@ -51,6 +51,19 @@ Datachore uses an API similar to Python on Google App Engine where there is a
 class representing an Entity Kind. This class has properties that define their
 type.
 
+To initialize Datachore with the SDK/Appengine first you need to choose the 
+API/Datastore it will use. Most people will just use the RemoteApiProxy, which 
+can be initialized with this simple line:
+
+```php
+<?php
+$datastore = new Datachore\Datastore\GoogleRemoteApi;
+```
+
+Datachore will now automatically use $datastore implicitly for all connections.
+
+In the future other APIs may be supported, such as the GData API.
+
 The features Datachore supports so far is:
 
   * Types:
