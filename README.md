@@ -8,6 +8,13 @@ ODM library for Google Datastore. This library has the advantage of supporting
 the protocol via the SDK and uses the local instance either locally or on the
 Appengine servers.
 
+Features
+--------
+
+  * Auto Indexer: automatically creates an index.yaml file for GAE.
+  * Direct Access to the API: uses the remote api proxy, just like the python
+    environment to assure the fastest access and lowest latency.
+
 Requirements
 ------------
 
@@ -25,13 +32,13 @@ If you're not familiar with Composer, please see <http://getcomposer.org/>.
 
 ```json
 {
-    // ...
     "require": {
-        "datachore/datachore": "0.0.1" // Most recent tagged version
+        "datachore/datachore": "dev-master"
     },
-    // ...
 }
 ```
+
+It is preferable to use a specific version, ie: 0.0.3 over dev-master.
 
 2. Run `composer install`.
 
