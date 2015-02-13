@@ -1,8 +1,12 @@
 <?php
 
-/** @TODO:
-*    * Get Sets to work correctly.
-*/
+/** Base Model class for GAE Datastore Datachore API.
+ * 
+ * This class is the base class used to represent entities in 
+ * Google Appengine's Datastore. Extend this class to represent a set of
+ * Datastore entities in your own application. The type of each field or
+ * property must be modeled using one of the Datachore\Type classes.
+ */
 namespace Datachore;
 
 class Model extends Datachore
