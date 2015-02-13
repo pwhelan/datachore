@@ -5,7 +5,8 @@ namespace Datachore;
 abstract class Datastore
 {
 	protected $_datasetId;
-	protected static $_instance;
+	protected static $_instance = null;
+	
 	
 	public function __construct(array $config = [])
 	{
@@ -18,6 +19,11 @@ abstract class Datastore
 	
 	public static function getInstance()
 	{
+		if (self::$_instance == null)
+		{
+			self::$_instance = new Datastore\GoogleRemoteApi;
+		}
+		
 		return self::$_instance;
 	}
 	
