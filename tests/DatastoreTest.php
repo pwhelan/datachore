@@ -207,18 +207,33 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 			}
 		}
 		
-		sleep(10);
+		sleep(5);
 		foreach ($tests as $test)
 		{
-			$t2 = json_decode(
-				Guzzlehttp\get('http://127.0.0.1:8080/test/'.$test->id)
-					->getBody()
-			);
-			
-			foreach ($test as $key => $val)
+			// Really lame way to avoid problems with App Engine SDK
+			// and the asynchronous nature of Datastore.
+			do
 			{
-				$this->assertEquals($val, $t2->{$key}, "Test[$idx]: Incorrectly retrieved value for {$key}");
+				try
+				{
+					$t2 = json_decode(
+						Guzzlehttp\get('http://127.0.0.1:8080/test/'.$test->id)
+							->getBody()
+					);
+					
+					foreach ($test as $key => $val)
+					{
+						$this->assertEquals($val, $t2->{$key}, "Test[$idx]: Incorrectly retrieved value for {$key}");
+					}
+				}
+				catch (Exception $e)
+				{
+					continue;
+				}
+				break;
 			}
+			while (1);
+			
 		}
 	}
 	
