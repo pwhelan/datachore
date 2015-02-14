@@ -81,6 +81,34 @@ class Model extends Datachore
 		throw new \Exception('Unknown Key: '.$key);
 	}
 	
+	private function _valueToArray($prop)
+	{
+		switch(true)
+		{
+			case $prop == null || $prop->get() == null:
+				return null;
+			
+			case $prop instanceof Type\Timestamp:
+				return $prop->get()->getTimestamp();
+			
+			case $prop instanceof Type\Key:
+				return $prop->get()->toArray();
+			
+			case $prop instanceof Type\Set:
+				return $prop->get()
+					->map(function($item) {
+						return $this->_valueToArray($item);
+					})
+					->toArray();
+			
+			case $prop instanceof TypeInterface:
+				return $prop->get();
+			
+			default:
+				return $prop;
+		}
+	}
+	
 	public function toArray()
 	{
 		$ret = [];
@@ -93,7 +121,7 @@ class Model extends Datachore
 		
 		foreach ($this->properties as $key => $prop)
 		{
-			$ret[$key] = $prop->get();
+			$ret[$key] = $this->_valueToArray($prop);
 		}
 		
 		return $ret;
