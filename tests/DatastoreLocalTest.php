@@ -3,9 +3,25 @@
 require_once __DIR__.'/model/Test.php';
 require_once __DIR__.'/model/Reference.php';
 require_once __DIR__.'/model/Testcase.php';
+require_once __DIR__.'/model/Blob.php';
 
 define('APPENGINE_BASE_SDK', __DIR__.'/../google_appengine/php/sdk/');
 
+
+class StringValue
+{
+	protected $val;
+	
+	public function __construct($val)
+	{
+		$this->val = $val;
+	}
+	
+	public function __toString()
+	{
+		return $this->val;
+	}
+}
 
 class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 {
@@ -621,4 +637,26 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		);
 	}
 	
+	public function testBlobs()
+	{
+		$blob = new model\Blob;
+		
+		$blob->blob = "FOOBAR";
+		$blob->text = "BARFOO";
+		
+		$this->assertEquals($blob->blob, "FOOBAR");
+		$this->assertEquals($blob->text, "BARFOO");
+	}
+	
+	public function testSetStringFromObject()
+	{
+		$test = new model\Test;
+		$string = new StringValue("FOOBAR");
+		
+		$test->name = $string;
+		$this->assertEquals($test->name, "FOOBAR");
+		
+		$test->name = 5.0;
+		$this->assertEquals($test->name, "5.0");
+	}
 }
