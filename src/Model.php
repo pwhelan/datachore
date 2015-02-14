@@ -17,14 +17,8 @@ class Model extends Datachore
 	/** Property definitions **/
 	protected $properties = [];
 	
-	/** Property Values **/
-	protected $values = [];
-	
 	/** Changed values **/
-	protected $updates = [];
-	
-	/** Foreign Objects **/
-	protected $foreign = [];
+	protected $updated = [];
 	
 	
 	public function __get($key)
@@ -44,62 +38,12 @@ class Model extends Datachore
 		{
 			return $this->__key;
 		}
-		else if ($this->properties[$key] instanceof Type\Key)
+		else if (isset($this->properties[$key]))
 		{
-			if (isset($this->updates[$key]))
-			{
-				if ($this->updates[$key] instanceof \google\appengine\datastore\v4\Key)
-				{
-					$fkey = $this->updates[$key];
-				}
-			}
-			
-			if (!isset($fkey) && isset($this->values[$key]))
-			{
-				$fkey = $this->values[$key]->rawValue();
-			}
-			
-			// @codeCoverageIgnoreStart
-			if (!isset($fkey) || !$fkey instanceof \google\appengine\datastore\v4\Key)
-			{
-				return null;
-			}
-			// @codeCoverageIgnoreEnd
-			
-			if (!isset($this->foreign[$key]))
-			{
-				$kindName = $fkey->getPathElement(0)->getKind();
-				$className = str_replace('_', '\\', $kindName);
-				
-				$model = (new $className)->where('id', '==', $fkey)->first();
-				if ($model)
-				{
-					$this->foreign[$key] = $model;
-					return $model;
-				}
-			}
-			
-			return $this->foreign[$key];
-		}
-		else if (!isset($this->values[$key]) && !isset($this->updates[$key]) && $this->properties[$key] instanceof Type\Set)
-		{
-			$this->updates[$key] = new \ArrayObject;
-			return $this->updates[$key];
-		}
-		else if (isset($this->updates[$key]))
-		{
-			return $this->updates[$key];
+			return $this->properties[$key]->get();
 		}
 		
-		if (isset($this->values[$key]))
-		{
-			return $this->values[$key]->saveValue();
-		}
-		
-		if (isset($this->properties[$key]))
-		{
-			return null;
-		}
+		throw new \InvalidArgumentException("Unknown property: ".$key);
 	}
 	
 	public function __set($key, $val)
@@ -111,54 +55,27 @@ class Model extends Datachore
 				return $this->__key = clone $val;
 			}
 		}
-		else if ($this->properties[$key] instanceof Type\Key)
+		else if (isset($this->properties[$key]))
 		{
-			if ($val instanceof \google\appengine\datastore\v4\Key)
-			{
-				return $this->updates[$key] = $val;
-			}
-			else if ($val instanceof Model)
-			{
-				$this->updates[$key] = $val->key;
-				$this->foreign[$key] = $val;
-				
-				return $val;
-			}
+			$this->properties[$key]->set($val);
+			$this->updated[] = $key;
 		}
-		else if ($this->properties[$key] instanceof Type\Set)
-		{
-			if (is_array($val))
-			{
-				return $this->updates[$key] = new \ArrayObject($val);
-			}
-		}
-		
-		if (!isset($this->properties[$key]))
+		else
 		{
 			throw new \Exception("Unknown Property for ".get_class($this).": ".$key);
 		}
-		
-		return $this->updates[$key] = $val;
 	}
 	
 	public function __isset($key)
 	{
-		return isset($this->values[$key]) || isset($this->updates[$key]);
+		return isset($this->properties[$key]);
 	}
 	
 	public function getKey($key)
 	{
 		if (isset($this->properties[$key]) && $this->properties[$key] instanceof Type\Key)
 		{
-			if (isset($this->updates[$key]))
-			{
-				return $this->updates[$key];
-			}
-			else if (isset($this->values[$key]))
-			{
-				return $this->values[$key];
-			}
-			return null;
+			return $this->properties[$key]->key();
 		}
 		
 		throw new \Exception('Unknown Key: '.$key);
@@ -176,6 +93,9 @@ class Model extends Datachore
 		
 		foreach ($this->properties as $key => $prop)
 		{
+			$ret[$key] = $prop->get();
+		}
+		/*
 			if ($prop instanceof Type\Set)
 			{
 				if (isset($this->updates[$key]))
@@ -245,6 +165,7 @@ class Model extends Datachore
 				}
 			}
 		}
+		*/
 		
 		return $ret;
 	}
@@ -254,21 +175,29 @@ class Model extends Datachore
 		parent::__construct();
 		
 		
-		if ($entity)
-		{
-			$this->__key = $entity->entity->getKey();
-			foreach($entity->entity->getPropertyList() as $property)
-			{
-				$this->values[$property->getName()] =
-					new Value($property->getValue());
-			}
-		}
-		
 		foreach ($this->properties as $key => $property)
 		{
 			if (is_numeric($property))
 			{
 				$this->properties[$key] = Type::getTypeFromEnum($property);
+			}
+		}
+		
+		if ($entity)
+		{
+			$this->__key = $entity->entity->getKey();
+			foreach($entity->entity->getPropertyList() as $property)
+			{
+				$value = new Value($property->getValue());
+				$raw = $value->rawValue();
+				
+				if ($this->properties[$property->getName()] instanceof Type\Timestamp)
+				{
+					$raw /= (1000 * 1000);
+				}
+				
+				$this->properties[$property->getName()]->set($raw);
+				//);
 			}
 		}
 		

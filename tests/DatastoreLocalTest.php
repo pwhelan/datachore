@@ -101,7 +101,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(self::$counter-1, $test->counter);
 		$this->assertEquals(13.37, $test->price);
 		$this->assertEquals("Friendly little bugger", $test->description);
-		$this->assertEquals($now, $test->datetime);
+		$this->assertEquals(new DateTime('@'.(string)$now), $test->datetime);
 	}
 	
 	public function testToArray()
@@ -257,7 +257,10 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		sleep(5);
 		
 		$test = model\Test::find($test->id);
-		$this->assertEquals($test->datetime, $date->getTimestamp());
+		$this->assertEquals(
+			$test->datetime->getTimestamp(),
+			$date->getTimestamp()
+		);
 	}
 	
 	public function testInsertDateTimeString()
@@ -270,12 +273,12 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$test->datetime = $date;
 		$test->save();
 		
-		$this->assertEquals($test->datetime, $date);
+		$this->assertEquals($test->datetime, new DateTime($date));
 		
 		sleep(5);
 		
 		$test = model\Test::find($test->id);
-		$this->assertEquals($test->datetime, strtotime($date));
+		$this->assertEquals($test->datetime, new DateTime($date));
 	}
 	
 	public function testLessThanEquals()
@@ -348,19 +351,19 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$tests = model\Test::where('datetime', '==', "1983-03-30")->get();
 		foreach($tests as $test)
 		{
-			$this->assertEquals(strtotime("1983-03-30"), $test->datetime);
+			$this->assertEquals(new DateTime("1983-03-30"), $test->datetime);
 		}
 		
 		$tests = model\Test::where('datetime', '==', new DateTime("1983-03-30"))->get();
 		foreach($tests as $test)
 		{
-			$this->assertEquals(strtotime("1983-03-30"), $test->datetime);
+			$this->assertEquals(new DateTime("1983-03-30"), $test->datetime);
 		}
 		
 		$tests = model\Test::where('datetime', '==', strtotime("1983-03-30"))->get();
 		foreach($tests as $test)
 		{
-			$this->assertEquals(strtotime("1983-03-30"), $test->datetime);
+			$this->assertEquals(new DateTime("1983-03-30"), $test->datetime);
 		}
 	}
 	
@@ -585,7 +588,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$case = new model\Testcase;
 		$tests = model\Test::all();
 		
-		$this->assertInstanceOf('ArrayObject', $case->tests);
+		$this->assertInstanceOf('Datachore\Collection', $case->tests);
 		$case->tests = $tests;
 		$this->assertEquals($tests, $case->tests);
 		
@@ -607,7 +610,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 				function($test) {
 					return $test->getKeyValue()->getPathElement(0)->getId();
 				},
-				$savedcase->tests
+				$savedcase->tests->toArray()
 			)
 		);
 	}

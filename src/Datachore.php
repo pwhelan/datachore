@@ -158,20 +158,26 @@ class Datachore
 						$time = $value->format('u') * (1000 * 1000) +
 							$value->getTimestamp() * (1000 * 1000);
 						break;
+					
 					case is_numeric($value):
 						$time = (int)($value * 10000) * 100;
 						break;
+					
 					case is_string($value):
 						$time = strtotime($value) * (1000 * 1000);
 						break;
-						
+					
+					case $value == null:
+						$time = 0;
+						break;
+					
 					// @codeCoverageIgnoreStart
 					default:
-						throw new \Exception('Unsupported time');
+						throw new \Exception('Unsupported time: '.print_r($value, true));
 						// @codeCoverageIgnoreEnd
 				}
 				
-				$propval->setTimestampMicrosecondsValue($time);
+				if ($time) $propval->setTimestampMicrosecondsValue($time);
 				break;
 			
 			case $property instanceof Type\Blob:
@@ -276,24 +282,18 @@ class Datachore
 		
 		foreach($this->properties as $key => $type)
 		{
-			if (isset($this->updates[$key]))
-			{
-				$value = $this->updates[$key];
-			}
-			else if (isset($this->values[$key]))
-			{
-				$value = $this->values[$key];
-			}
-			else
-			{
-				// No value..
-				continue;
-			}
+			$value = $type->get();
 			
 			$property = $entity->addProperty();
 			$propval = $property->mutableValue();
 			
-			$this->_assignPropertyValue($propval, $this->properties[$key], $key, $value);
+			$this->_assignPropertyValue(
+				$propval,
+				$this->properties[$key],
+				$key, 
+				$value
+			);
+			
 			$property->setName($key);
 		}
 				
