@@ -4,8 +4,17 @@ namespace Datachore\Type;
 
 class Timestamp implements \Datachore\TypeInterface
 {
+	static protected $_gmt = null;
 	protected $_val = null;
 	
+	
+	public function __construct()
+	{
+		if (self::$_gmt == null)
+		{
+			self::$_gmt = new \DateTimeZone('GMT');
+		}
+	}
 	
 	public function get()
 	{
@@ -21,11 +30,11 @@ class Timestamp implements \Datachore\TypeInterface
 				break;
 			
 			case is_numeric($value):
-				$this->_val = new \DateTime('@' . (string)$value);
+				$this->_val = new \DateTime('@' . (string)$value, self::$_gmt);
 				break;
 			
 			case is_string($value):
-				$this->_val = new \DateTime($value);
+				$this->_val = new \DateTime($value, self::$_gmt);
 				break;
 			
 			case $value == null:
