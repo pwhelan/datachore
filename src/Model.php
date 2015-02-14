@@ -92,7 +92,11 @@ class Model extends Datachore
 				return $prop->get()->getTimestamp();
 			
 			case $prop instanceof Type\Key:
-				return $prop->get()->toArray();
+				$key = $prop->key();
+				return [
+					'id'	=> $key->getPathElement(0)->getId(),
+					'kind'	=> $key->getPathElement(0)->getKind()
+				];
 			
 			case $prop instanceof Type\Set:
 				return $prop->get()
@@ -103,6 +107,13 @@ class Model extends Datachore
 			
 			case $prop instanceof TypeInterface:
 				return $prop->get();
+			
+			case $prop instanceof Model:
+				$key = $prop->key;
+				return [
+					'id'	=> $key->getPathElement(0)->getId(),
+					'kind'	=> $key->getPathElement(0)->getKind()
+				];
 			
 			default:
 				return $prop;
