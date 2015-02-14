@@ -55,18 +55,6 @@ class Value
 		}
 	}
 	
-	public function saveValue()
-	{
-		switch(true)
-		{
-			case $this->_value->hasTimestampMicrosecondsValue():
-				return $this->_value->getTimestampMicrosecondsValue() /
-					(1000 * 1000);
-			default:
-				return $this->rawValue();
-		}
-	}
-	
 	// @CodeCoverageIgnore
 	public function __toString()
 	{
