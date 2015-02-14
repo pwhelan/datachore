@@ -244,7 +244,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				]],
 				'check'	=> function($result)
 				{
-					return $result->datetime->getTimestamp() <
+					return $result->datetime <
 						(new DateTime("1983-03-30"))
 							->getTimestamp();
 				}
@@ -257,7 +257,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				]],
 				'check'	=> function($result)
 				{
-					return $result->datetime->getTimestamp() <=
+					return $result->datetime <=
 						(new DateTime("1980-01-01"))
 							->getTimestamp();
 				}

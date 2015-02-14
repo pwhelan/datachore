@@ -129,7 +129,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(self::$counter-1, $array['counter']);
 		$this->assertEquals(13.37, $array['price']);
 		$this->assertEquals("Friendly little bugger", $array['description']);
-		$this->assertEquals($now->getTimestamp(), $array['datetime']->getTimestamp());
+		$this->assertEquals($now->getTimestamp(), $array['datetime']);
 		$this->assertArrayHasKey('ref', $array);
 		$this->assertEquals($ref->id, $array['ref']['id']);
 		
@@ -137,7 +137,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$test->datetime = $test->datetime->getTimestamp();
 		$array = $test->toArray();
 		
-		$this->assertEquals($now->getTimestamp(), $test->datetime);
+		$this->assertEquals($now->getTimestamp(), $test->datetime->getTimestamp());
 		
 		$test->save();
 		
@@ -205,6 +205,12 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 			{
 				continue;
 			}
+			
+			if ($k == 'datetime')
+			{
+				$v = new DateTime('@'.(string)$v);
+			}
+			
 			$this->assertEquals($v, $test->{$k}, "Old value for {$k} does not match new value");
 		}
 	}
