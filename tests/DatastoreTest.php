@@ -196,7 +196,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 			{
 				if ($key == 'datetime' && !is_numeric($val))
 				{
-					$val = strtotime($val);
+					$val = new DateTime($val);
 				}
 				
 				$this->assertEquals(
@@ -244,7 +244,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				]],
 				'check'	=> function($result)
 				{
-					return $result->datetime <
+					return $result->datetime->getTimestamp() <
 						(new DateTime("1983-03-30"))
 							->getTimestamp();
 				}
@@ -257,7 +257,7 @@ class DatastoreTest extends PHPUnit_Framework_TestCase
 				]],
 				'check'	=> function($result)
 				{
-					return $result->datetime <=
+					return $result->datetime->getTimestamp() <=
 						(new DateTime("1980-01-01"))
 							->getTimestamp();
 				}
