@@ -705,6 +705,28 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$case->foobar == 1234;
 	}
 	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testSetBadId()
+	{
+		$test = new Model\Test;
+		$test->id = ['foo' => 'bar'];
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testBadWhere()
+	{
+		$test = model\Test::where('foo', 'bar')->get();
+	}
+	
+	public function testAndWhere()
+	{
+		$test = model\Test::where('id', '=', 1)->andWhere('id', '=', 2)->get();
+	}
+	
 	public function testBlobs()
 	{
 		$now = time();

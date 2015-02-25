@@ -585,7 +585,7 @@ class Datachore
 				
 				if (count($args) != 3)
 				{
-					throw new \Exception('Insufficient arguments for WHERE clause');
+					throw new \InvalidArgumentException('Insufficient arguments for WHERE clause');
 				}
 				
 				list($property, $operator, $value) = $args;

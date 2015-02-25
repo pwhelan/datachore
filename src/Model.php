@@ -54,6 +54,10 @@ class Model extends Datachore
 			{
 				return $this->__key = clone $val;
 			}
+			else
+			{
+				throw new \InvalidArgumentException("Invalid Type for Key");
+			}
 		}
 		else if (isset($this->properties[$key]))
 		{
