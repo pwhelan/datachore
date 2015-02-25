@@ -62,23 +62,13 @@ class Model extends Datachore
 		}
 		else
 		{
-			throw new \Exception("Unknown Property for ".get_class($this).": ".$key);
+			throw new \InvalidArgumentException("Unknown Property for ".get_class($this).": ".$key);
 		}
 	}
 	
 	public function __isset($key)
 	{
 		return isset($this->properties[$key]);
-	}
-	
-	public function getKey($key)
-	{
-		if (isset($this->properties[$key]) && $this->properties[$key] instanceof Type\Key)
-		{
-			return $this->properties[$key]->key();
-		}
-		
-		throw new \Exception('Unknown Key: '.$key);
 	}
 	
 	private function _valueToArray($prop)
