@@ -1,10 +1,11 @@
 language: php
 
 env:
-    - APPENGINE_VERSION=1.9.17
+    - APPENGINE_VERSION=1.9.18
 
 php:
     - 5.4
+    - 5.5
 
 before_script:
     - rm -rf google_appengine
