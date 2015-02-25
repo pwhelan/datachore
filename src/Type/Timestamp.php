@@ -29,6 +29,7 @@ class Timestamp implements \Datachore\TypeInterface
 				break;
 			
 			case $value == null:
+				$this->_val = null;
 				break;
 			
 			default:
