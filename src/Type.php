@@ -38,5 +38,7 @@ class Type
 		case self::Set:
 			return new Type\Set;
 		}
+		
+		throw new \InvalidArgumentException('Unknown Type Enum');
 	}
 }
