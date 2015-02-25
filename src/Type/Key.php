@@ -51,6 +51,7 @@ class Key implements \Datachore\TypeInterface
 				return;
 			
 			case $value === NULL:
+				$this->_key = $this->_entity = null;
 				return;
 			
 			default:
