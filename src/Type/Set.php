@@ -40,14 +40,11 @@ class Set implements \Datachore\TypeInterface
 	{
 		if ($value == null)
 		{
+			$this->_val = new \Datachore\Collection;
 		}
 		else if ($value instanceof \Datachore\Collection)
 		{
 			$this->_val = clone $value;
-		}
-		else if ($value instanceof Set)
-		{
-			$this->_val = clone $value->get();
 		}
 		else if (is_array($value))
 		{
@@ -59,7 +56,7 @@ class Set implements \Datachore\TypeInterface
 		}
 		else
 		{
-			throw new \InvalidArgumentException("Invalid Type for Set: ".get_class($value));
+			throw new \InvalidArgumentException("Invalid Set Value");
 		}
 	}
 }
