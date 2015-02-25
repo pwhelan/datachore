@@ -8,6 +8,9 @@ ODM library for Google Datastore. This library has the advantage of supporting
 the protocol via the SDK and uses the local instance either locally or on the
 Appengine servers.
 
+This makes this library much faster than libraries accessing the Datastore via the Google API
+and also makes local development dead easy.
+
 Features
 --------
 
