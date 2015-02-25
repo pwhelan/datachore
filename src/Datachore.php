@@ -291,7 +291,7 @@ class Datachore
 			$this->_filter->setOperator(\google\appengine\datastore\v4\CompositeFilter\Operator::AND_);
 		}
 		
-		if (is_callable($propertyName))
+		if ($propertyName instanceof \Closure)
 		{
 			$propertyName($this);
 			return $this;
