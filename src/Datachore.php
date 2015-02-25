@@ -121,134 +121,63 @@ class Datachore
 		return $rc;
 	}
 	
-	private function _assignPropertyValue($propval, $property, $key, $value)
+	private function _assignPropertyValue($propval, $property)
 	{
-		if ($value instanceof Value)
-		{
-			$value = $value->rawValue();
-			if ($property instanceof Type\Timestamp)
-			{
-				$value /= (1000 * 1000);
-			}
-		}
-		
 		switch(true)
 		{
 			case $property instanceof Type\String:
-				$propval->setStringValue($value);
+				$propval->setStringValue($property->get());
 				break;
 			
 			case $property instanceof Type\Integer:
-				$propval->setIntegerValue((int)$value);
+				$propval->setIntegerValue((int)$property->get());
 				break;
 			
 			case $property instanceof Type\Boolean:
-				$propval->setBooleanValue((bool)$value);
+				$propval->setBooleanValue((bool)$property->get());
 				break;
 			
 			case $property instanceof Type\Double:
-				$propval->setDoubleValue((double)$value);
+				$propval->setDoubleValue((double)$property->get());
 				break;
 			
 			case $property instanceof Type\Timestamp:
 				
-				switch(true)
+				if ($property->get())
 				{
-					case $value instanceof \DateTime:
-						$time = $value->format('u') * (1000 * 1000) +
-							$value->getTimestamp() * (1000 * 1000);
-						break;
+					$time = $property->get()->format('u') * (1000 * 1000) +
+						$property->get()->getTimestamp() * (1000 * 1000);
 					
-					case is_numeric($value):
-						$time = (int)($value * 10000) * 100;
-						break;
-					
-					case is_string($value):
-						$time = strtotime($value) * (1000 * 1000);
-						break;
-					
-					case $value == null:
-						$time = 0;
-						break;
-					
-					// @codeCoverageIgnoreStart
-					default:
-						throw new \Exception('Unsupported time: '.print_r($value, true));
-						// @codeCoverageIgnoreEnd
+					$propval->setTimestampMicrosecondsValue($time);
 				}
-				
-				if ($time) $propval->setTimestampMicrosecondsValue($time);
 				break;
 			
 			case $property instanceof Type\Blob:
-				$propval->setBlobValue($value);
+				$propval->setBlobValue($property->get());
 				break;
 			
-			// @codeCoverageIgnoreStart
 			case $property instanceof Type\BlobKey:
-				$propval->setBlobKeyValue($value);
-				// @codeCoverageIgnoreEnd
+				$propval->setBlobKeyValue($property->get());
 				break;
 			
 			case $property instanceof Type\Key:
-				
-				if ($value instanceof Model)
-				{
-					$fkey = $value->key;
-				}
-				else if ($value instanceof \google\appengine\datastore\v4\Key)
-				{
-					$fkey = $value;
-				}
-				else if ($value instanceof \google\appengine\datastore\v4\Value)
-				{
-					$fkey = $value->getKeyValue();
-				}
-				else
-				{
-					$fkey = $this->getKey($key);
-				}
-				
-				if ($fkey && $fkey instanceof \google\appengine\datastore\v4\Key)
+				if ($property->key())
 				{
 					$keyval = $propval->mutableKeyValue();
-					$keyval->mergeFrom($fkey);
-				}
-				else if ($value)
-				{
-					if ($value instanceof \google\appengine\datastore\v4\Key)
-					{
-						$keyval = $propval->mutableKeyValue();
-						$keyval->mergeFrom($value);
-					}
-					else if ($value instanceof Value)
-					{
-						$keyval = $propval->mutableKeyValue();
-						$keyval->mergeFrom($value);
-					}
-					else if ($value instanceof Model)
-					{
-						$this->_GoogleKeyValue($propval->mutableKeyValue(), $value);
-					}
-					else
-					{
-						throw new \Exception("Unknown Key Type");
-					}
+					$keyval->mergeFrom($property->key());
 				}
 				break;
 			
 			case $property instanceof Type\Set:
-				foreach ($value as $key => $val)
+				foreach ($property->get() as $key => $val)
 				{
+					$prop = clone $property->type();
+					$prop->set($val);
+					
 					$lval = $propval->mutableListValue($key);
-					$this->_assignPropertyValue($lval, $property->type(), $key, $val);
+					$this->_assignPropertyValue($lval, $prop);
 				}
 				break;
-			
-			// @codeCoverageIgnoreStart
-			default:
-				throw new \Exception("ILLEGAL ARGZZZZ!");
-				// @codeCoverageIgnoreEnd
 		}
 		
 	}
@@ -289,9 +218,7 @@ class Datachore
 			
 			$this->_assignPropertyValue(
 				$propval,
-				$this->properties[$key],
-				$key, 
-				$value
+				$this->properties[$key]
 			);
 			
 			$property->setName($key);
