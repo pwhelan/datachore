@@ -1,8 +1,8 @@
 Datachore: Google AppEngine Datastore ODM library
 =================================================
 
-[![Build Status](https://travis-ci.org/pwhelan/datachore.svg?branch=master)](https://travis-ci.org/pwhelan/datachore)
-[![Coverage Status](https://coveralls.io/repos/pwhelan/datachore/badge.png?branch=master)](https://coveralls.io/r/pwhelan/datachore?branch=master)
+[![Build Status](https://travis-ci.org/pwhelan/datachore.svg?branch=0.2.0)](https://travis-ci.org/pwhelan/datachore)
+[![Coverage Status](https://coveralls.io/repos/pwhelan/datachore/badge.png?branch=0.2.0)](https://coveralls.io/r/pwhelan/datachore?branch=0.2.0)
 
 ODM library for Google Datastore. This library has the advantage of supporting
 the protocol via the SDK and uses the local instance either locally or on the
@@ -24,7 +24,9 @@ Requirements
 Installing
 ----------
 
-The easiest way to work with Datachore is installing it via composer.
+The easiest way to work with Datachore is installing it via composer. This works
+just as well with Google App Engine if you check out your dependencies locally
+then deploy your code.
 
 If you're not familiar with Composer, please see <http://getcomposer.org/>.
 
@@ -38,9 +40,13 @@ If you're not familiar with Composer, please see <http://getcomposer.org/>.
 }
 ```
 
-It is preferable to use a specific version, ie: 0.1.0 over dev-master.
+It is preferable to use a specific version, ie: 0.1.0 over dev-master. Minor
+versions will contain major changes, at least under the hood, until version 1.0.0.
+
 
 2. Run `composer install`.
+
+This pulls in a local copy of datachore into the vendor sub directory for you.
 
 3. Include Composer's autoload file.
 
@@ -50,6 +56,8 @@ It is preferable to use a specific version, ie: 0.1.0 over dev-master.
 
 require 'vendor/autoload.php';
 ```
+
+This code will autoload Datachore when it is invoked, nice huh?
 
 Getting Started
 ---------------
@@ -78,13 +86,9 @@ The features Datachore supports so far is:
     * Integer
     * Double
     * String
-    * List (called sets internally)
+    * Set (equivalent to Lists for Python, named Set to avoid keyword collision).
     * Key
     * Timestamp
-
-Sets work but the API still is not finished. Sets are saved as collections but
-are retrieved simply as an array. In the future Datachore, in the case of sets
-of keys, will use lazy loading to fetch the actual entities they refer to.
 
 ### Creating model files
 
@@ -197,8 +201,50 @@ $batman = model\Test::where('ref', '==', $robin)->first();
 
 ### Using the AutoIndexer
 
-To use the AutoIndexer it is simply a matter of invoking
+To use the AutoIndexer it is simply a matter of invoking 
 Datachore::ActivateAutoIndexer() then invoking Datachore::dumpIndex() once
-any quieres to be indexed have been called. This is especially important for
-queries using orderBy since the live environment will throw an error if there is
-no corresponding index for queries with ordering.
+any quieres to be indexed have been called. 
+
+The AutoIndexer can be used to avoid any missing index errors on the live system,
+so use it!
+
+Here is an example of how to use it in your Front Controller (if you use Silex):
+
+```php
+<?php
+
+$app = new Silex\Application
+class Environment
+{
+        private static $is_app_engine = null;
+        const GAE_APP_ID = 'Google App Engine';
+        
+        
+        // This function is made necessary by the following problems:
+        //   * GCS cannot agree on when which URL; public or image serving works,
+        //     one works locally the other one @Google... And worse, some work
+        //     but only as downloads, some combinations work perfectly others
+        //     flat out do not respond.
+        public static function isAppEngine()
+        {
+                if (self::$is_app_engine === null)
+                {
+                        self::$is_app_engine = 
+                                substr($_SERVER['SERVER_SOFTWARE'], 0, strlen(self::GAE_APP_ID)) == self::GAE_APP_ID;
+                }
+                
+                return self::$is_app_engine;
+        }
+}
+
+if (!Environment::isAppEngine())
+{
+        Datachore\Datachore::ActivateAutoIndexer();
+        $app->after(function() {
+                Datachore\Datachore::dumpIndex();
+        });        
+}
+
+```
+
+Enjoy!
