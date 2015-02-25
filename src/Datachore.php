@@ -326,11 +326,9 @@ class Datachore
 					$value->setBlobValue($rawValue);
 					break;
 				
-				// @codeCoverageIgnoreStart
 				case $this->properties[$propertyName] instanceof Type\BlobKey:
 					$value->setBlobKeyValue($rawValue);
 					break;
-				// @codeCoverageIgnoreEnd
 					
 				case $this->properties[$propertyName] instanceof Type\String:
 					$value->setStringValue($rawValue);

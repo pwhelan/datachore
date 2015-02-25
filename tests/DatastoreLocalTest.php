@@ -283,6 +283,9 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 			$test->datetime->getTimestamp(),
 			$date->getTimestamp()
 		);
+		
+		$test->datetime = null;
+		$this->assertEquals($test->datetime, null);
 	}
 	
 	public function testInsertDateTimeString()
@@ -612,6 +615,7 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		
 		$this->assertInstanceOf('Datachore\Collection', $case->tests);
 		$case->tests = $tests;
+		$case->results = range(1, 10);
 		$this->assertEquals($tests, $case->tests);
 		
 		$case->save();
@@ -635,17 +639,96 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 				$savedcase->tests->toArray()
 			)
 		);
+		
+		$savedcase->tests = null;
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testSetsBadValue()
+	{
+		$case = new model\Testcase;
+		$case->tests = 1234;
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testKeyBadValue()
+	{
+		$case = new model\Test;
+		$case->ref = 1234;
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testStringBadValue()
+	{
+		$case = new model\Test;
+		$case->name = (object)['foo' => 'bar'];
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testBadTypeEnum()
+	{
+		Datachore\Type::getTypeFromEnum(1337);
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testSetBadDate()
+	{
+		$test = new Model\Test;
+		$test->datetime = ['foo' => 'bar'];
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testSetUnknownProperty()
+	{
+		$case = new model\Testcase;
+		$case->foobar = 1234;
+	}
+	
+	/**
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testGetUnknownProperty()
+	{
+		$case = new model\Testcase;
+		$case->foobar == 1234;
 	}
 	
 	public function testBlobs()
 	{
+		$now = time();
 		$blob = new model\Blob;
 		
+		$blob->random = $now;
 		$blob->blob = "FOOBAR";
 		$blob->text = "BARFOO";
 		
 		$this->assertEquals($blob->blob, "FOOBAR");
 		$this->assertEquals($blob->text, "BARFOO");
+		
+		$blob->save();
+		sleep(2);
+		
+		$find = model\Blob::where('blob', '=', 'FOOBAR')
+			->where('random', '=', $now)
+			->first();
+		$this->assertEquals($blob->id, $find->id);
+		
+		$find = model\Blob::where('text', '=', 'BARFOO')
+			->where('random', '=', $now)
+			->first();
+		$this->assertEquals($blob->id, $find->id);
 	}
 	
 	public function testSetStringFromObject()
