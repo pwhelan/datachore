@@ -1,8 +1,8 @@
 Datachore: Google AppEngine Datastore ODM library
 =================================================
 
-[![Build Status](https://travis-ci.org/pwhelan/datachore.svg?branch=0.2.1)](https://travis-ci.org/pwhelan/datachore)
-[![Coverage Status](https://coveralls.io/repos/pwhelan/datachore/badge.png?branch=0.2.1)](https://coveralls.io/r/pwhelan/datachore?branch=0.2.1)
+[![Build Status](https://travis-ci.org/pwhelan/datachore.svg?branch=0.2.2)](https://travis-ci.org/pwhelan/datachore)
+[![Coverage Status](https://coveralls.io/repos/pwhelan/datachore/badge.png?branch=0.2.2)](https://coveralls.io/r/pwhelan/datachore?branch=0.2.2)
 
 ODM library for Google Datastore. This library has the advantage of supporting
 the protocol via the SDK and uses the local instance either locally or on the
