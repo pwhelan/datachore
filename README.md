@@ -1,8 +1,8 @@
 Datachore: Google AppEngine Datastore ODM library
 =================================================
 
-[![Build Status](https://travis-ci.org/pwhelan/datachore.svg?branch=master)](https://travis-ci.org/pwhelan/datachore)
-[![Coverage Status](https://coveralls.io/repos/pwhelan/datachore/badge.png?branch=master)](https://coveralls.io/r/pwhelan/datachore?branch=master)
+[![Build Status](https://travis-ci.org/pwhelan/datachore.svg?branch=0.2.3)](https://travis-ci.org/pwhelan/datachore)
+[![Coverage Status](https://coveralls.io/repos/pwhelan/datachore/badge.png?branch=0.2.3)](https://coveralls.io/r/pwhelan/datachore?branch=0.2.3)
 
 ODM library for Google Datastore. This library has the advantage of supporting
 the protocol via the SDK and uses the local instance either locally or on the
@@ -43,7 +43,7 @@ If you're not familiar with Composer, please see <http://getcomposer.org/>.
 }
 ```
 
-It is preferable to use a specific version, ie: 0.1.0 over dev-master. Minor
+It is preferable to use a specific version, ie: 0.2.0 over dev-master. Minor
 versions will contain major changes, at least under the hood, until version 1.0.0.
 
 
