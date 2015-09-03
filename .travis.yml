@@ -1,3 +1,4 @@
+sudo: false
 language: php
 
 env:
@@ -21,7 +22,7 @@ before_script:
     - patch -p0 < tests/patches/sdk-appengine-logs.patch
 
 script:
-    - bash -c './google_appengine/dev_appserver.py tests/ --php_executable_path=$HOME/.phpenv/versions/$(phpenv version-name)/bin/php-cgi --skip_sdk_update_check --php_remote_debugging=yes 1>logs/out.log 2>logs/err.log & echo $! > appengine.pid'
+    - bash -c './google_appengine/dev_appserver.py tests/ --php_executable_path=$HOME/.phpenv/versions/$(phpenv version-name)/bin/php-cgi --skip_sdk_update_check --php_remote_debugging=yes & echo $! > appengine.pid'
     - vendor/bin/phpunit --coverage-clover logs/build.xml tests/
 
 after_script:
