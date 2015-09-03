@@ -5,11 +5,7 @@ env:
     - APPENGINE_VERSION=1.9.25
 
 php:
-    - 5.4
-    # Not ready to get php 5.5 testing ready ...
-    # will require a change to the invocation of dev_appserver.py
-    # so that it uses the php 5.5 binary.
-    #- 5.5
+    - 5.5
 
 before_script:
     - rm -rf google_appengine
