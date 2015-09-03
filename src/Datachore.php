@@ -14,7 +14,6 @@ class Datachore
 	private $_datasetId = null;
 	private $_datastore = null;
 	
-	protected $_operation;
 	protected $_runQuery;
 	protected $_query;
 	protected $_filter;
@@ -207,8 +206,6 @@ class Datachore
 		}
 		
 		
-		$this->_operation = $entity;
-		
 		foreach($this->properties as $key => $type)
 		{
 			$value = $type->get();
@@ -224,6 +221,33 @@ class Datachore
 			$property->setName($key);
 		}
 				
+		if (isset($singleSave) && $singleSave)
+		{
+			$this->endSave($trans);
+		}
+		
+		return true;
+	}
+	
+	public function delete($trans = null)
+	{
+		// Essentially a NO-OP
+		if (!$this->id)
+		{
+			return;
+		}
+		
+		if (!$trans)
+		{
+			$trans = $this->startSave();
+			$singleSave = true;
+		}
+		
+		
+		$key = $trans->mutation->addDelete();
+		$this->_GoogleKeyValue($key, $this->id);
+		
+		
 		if (isset($singleSave) && $singleSave)
 		{
 			$this->endSave($trans);

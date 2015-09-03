@@ -764,4 +764,45 @@ class DatastoreLocalTest extends PHPUnit_Framework_TestCase
 		$test->name = 5.0;
 		$this->assertEquals($test->name, "5.0");
 	}
+	
+	public function testDelete()
+	{
+		$test = new model\Test;
+		$test->name = "FOOBAR_".time().rand();
+		$test->save();
+		sleep(2);
+		
+		$test->delete();
+		sleep(2);
+		
+		$find = model\Test::where('name', '=', $test->name)
+			->first();
+		
+		$this->assertEquals(false, $find);
+	}
+	
+	public function testDeleteCollection()
+	{
+		$tests = new Datachore\Collection;
+		
+		
+		$counter = time();
+		for ($i = 0; $i < 8; $i++)
+		{
+			$tests[] = $test = new model\Test;
+			$test->name = "FOOBAR_".time().rand();
+			$test->counter = $counter;
+			$test->save();
+		}
+		
+		sleep(5);
+		
+		$tests->delete();
+		sleep(2);
+		
+		$find = model\Test::where('counter', '=', $counter)
+			->get();
+		
+		$this->assertCount(0, $find);
+	}
 }

@@ -4,7 +4,7 @@ namespace Datachore;
 
 class Collection extends \Illuminate\Support\Collection
 {
-	public function save()
+	private function __doOp($op)
 	{
 		if (count($this->items) > 0)
 		{
@@ -12,10 +12,20 @@ class Collection extends \Illuminate\Support\Collection
 			
 			foreach($this->items as $item)
 			{
-				$item->save($transaction);
+				$item->$op($transaction);
 			}
 			
 			$this->items[0]->endSave($transaction, $this);
 		}
+	}
+	
+	public function save()
+	{
+		$this->__doOp('save');
+	}
+	
+	public function delete()
+	{
+		$this->__doOp('delete');
 	}
 }
