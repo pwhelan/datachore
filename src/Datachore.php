@@ -201,7 +201,7 @@ class Datachore
 			//$this->_GoogleKeyValue($mutation->mutableKey());
 			
 			$entity = $trans->mutation->addInsertAutoId();
-			$this->_GoogleKeyValue($entity->mutableKey());
+			$this->_GoogleKeyValue($entity->mutableKey(), null, $this->ancestors);
 			$trans->insertauto[] = $this;
 		}
 		
@@ -274,9 +274,16 @@ class Datachore
 	];
 	
 	
-	final protected function _GoogleKeyValue(\google\appengine\datastore\v4\Key $key, $id = null)
+	final protected function _GoogleKeyValue(\google\appengine\datastore\v4\Key $key, $id = null, $ancestors)
 	{
 		$partitionId = $key->mutablePartitionId();
+		
+		
+		foreach ($ancestors as $ancestor)
+		{
+			$path = $key->addPathElement();
+			$path->mergeFrom($ancestor);
+		}
 		$path = $key->addPathElement();
 		
 		$partitionId->setDatasetId($this->datasetId());

@@ -8,11 +8,15 @@
  * property must be modeled using one of the Datachore\Type classes.
  */
 namespace Datachore;
+use \google\appengine\datastore\v4\Key as GoogleKey;
 
 class Model extends Datachore
 {
 	/** private super key **/
 	protected $__key = null;
+	
+	/** ancestors */
+	protected $ancestors = null;
 	
 	/** Property definitions **/
 	protected $properties = [];
@@ -25,18 +29,26 @@ class Model extends Datachore
 	{
 		if ($key == 'id')
 		{
-			if ($this->__key)
-			{
-				return $this->__key->getPathElement(0)->getId();
-			}
-			else
+			if (!$this->__key)
 			{
 				return null;
 			}
+			return $this->__key
+				->getPathElement($this->__key->getPathElementSize()-1)
+				->getId();
 		}
 		else if ($key == 'key')
 		{
 			return $this->__key;
+		}
+		else if ($key == 'ancestors')
+		{
+			if ($this->ancestors == null)
+			{
+				$this->ancestors = new Ancestors($this->__key);
+			}
+			
+			return $this->ancestors;
 		}
 		else if (isset($this->properties[$key]))
 		{
@@ -57,6 +69,20 @@ class Model extends Datachore
 			else
 			{
 				throw new \InvalidArgumentException("Invalid Type for Key");
+			}
+		}
+		else if ($key == 'ancestors')
+		{
+			if (!is_array($val))
+			{
+				$val = [$val];
+			}
+			
+			$this->ancestors = new Ancestors;
+			print_r($val);
+			foreach ($val as $ancestor)
+			{
+				$this->ancestors[] = $ancestor;
 			}
 		}
 		else if (isset($this->properties[$key]))
@@ -148,6 +174,8 @@ class Model extends Datachore
 		if ($entity)
 		{
 			$this->__key = $entity->entity->getKey();
+			$this->ancestors = new Ancestors($this->__key);
+			
 			foreach($entity->entity->getPropertyList() as $property)
 			{
 				$value = new Value($property->getValue());
@@ -159,7 +187,6 @@ class Model extends Datachore
 				}
 				
 				$this->properties[$property->getName()]->set($raw);
-				//);
 			}
 		}
 		
