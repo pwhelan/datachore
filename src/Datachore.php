@@ -274,20 +274,23 @@ class Datachore
 	];
 	
 	
-	final protected function _GoogleKeyValue(\google\appengine\datastore\v4\Key $key, $id = null, $ancestors)
+	final protected function _GoogleKeyValue(\google\appengine\datastore\v4\Key $key, $id = null, $ancestors = null)
 	{
 		$partitionId = $key->mutablePartitionId();
-		
-		
-		foreach ($ancestors as $ancestor)
-		{
-			$path = $key->addPathElement();
-			$path->mergeFrom($ancestor);
-		}
-		$path = $key->addPathElement();
-		
 		$partitionId->setDatasetId($this->datasetId());
 		
+		
+		if ($ancestors)
+		{
+			foreach ($ancestors as $ancestor)
+			{
+				$path = $key->addPathElement();
+				$path->mergeFrom($ancestor);
+			}
+		}
+		
+		
+		$path = $key->addPathElement();
 		if ($id)
 		{
 			if (!is_object($id))
