@@ -21,7 +21,7 @@ class GoogleClientApi extends \Datachore\Datastore
 		}
 		else
 		{
-			$this->__client->setAppplicationName($_SERVER['APPLICATION_ID']);
+			$this->__client->setApplicationName($_SERVER['APPLICATION_ID']);
 		}
 		
 		if (isset($config['client-id']))
