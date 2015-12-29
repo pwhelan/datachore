@@ -22,7 +22,7 @@
 		"phpunit/phpunit": "4.4.*",
 		"slim/slim": "2.3.5",
 		"guzzlehttp/guzzle": "4.2",
-		"satooshi/php-coveralls": "dev-master"
+		"satooshi/php-coveralls": "1.0.0"
 	},
 
 	"autoload": {
