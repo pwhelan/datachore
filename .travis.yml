@@ -2,7 +2,7 @@ sudo: false
 language: php
 
 env:
-    - APPENGINE_VERSION=1.9.25
+    - APPENGINE_VERSION=1.9.30
 
 php:
     - 5.5
