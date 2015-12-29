@@ -29,7 +29,7 @@ class GoogleClientApi extends \Datachore\Datastore
 			$this->__client->setClientId($config['client-id']);
 		}
 		
-		if (isset($confg['private-key']) && isset($config['service-accout-name']))
+		if (isset($confg['private-key']) && isset($config['service-account-name']))
 		{
 			$this->__client->setAssertionCredentials(
 				new \Google_Auth_AssertionCredentials(
